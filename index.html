@@ -148,6 +148,7 @@ a{color:var(--brand-deep)}
 .note mark{padding:0 4px;border-radius:2px;font-weight:600}
 .note mark.m-in{background:#dcefe2;color:#0f5230}
 .note mark.m-due{background:#f8e2dd;color:#8c2a19}
+.note mark.m-soon{background:#eae7f2;color:#40337a}
 .note mark.m-none{background:#fbeecb;color:#6f4405}
 .trail .none{font-size:13px;color:var(--ink3);font-style:italic}
 
@@ -201,6 +202,7 @@ footer button{background:none;border:0;padding:0;color:var(--brand-deep);text-de
       <button class="btn" id="btnCsv">Download CSV</button>
       <button class="btn" id="btnPrint">Print report</button>
       <button class="btn btn-solid" id="btnRefresh">Refresh</button>
+      <button class="btn" id="btnSignout" title="Forget the passcode on this device">Sign out</button>
     </div>
   </div>
 </header>
@@ -258,9 +260,13 @@ const UNITS = { LAKH:1e5, LAKHS:1e5, LAK:1e5, LAKS:1e5, LAC:1e5, LACS:1e5,
                 CR:1e7, CRORE:1e7, CRORES:1e7, K:1e3 };
 
 /* money already in hand */
-const CAME_IN = /(AA\s?GAY|AA\s?GY|AAYE|AAYA|AAYI|MIL\s?GAY|MILE|KIYE|KAR\s?DIY|KARWA\s?DIY|DE\s?DIY|DIYE|CLEAR|RECEIV|CREDIT|TRANSFER|BHEJ|PAID)/i;
+const CAME_IN = /(AA\s?GAY|AA\s?GY|AAYE|AAYA|AAYI|MIL\s?GAY|MILE|KIYE|KAR\s?DIY|KARWA\s?DIY|DE\s?DIY|DIYE|CLEAR|RECEIV|CREDIT|TRANSFER|BHEJ\s?DIY|PAID)/i;
 /* money still owed */
 const STILL_DUE = /(BAKI|BACHA|\bRED\b|PENDING|MAGN|MANGN|LENI|LENA|DENA|CHAHIYE|\bDUE\b|KARWANA|KARNA|REH\s?GAY)/i;
+/* a promise, not a receipt — "AAYE GE", "KAR DENGE", "HO JAYEGA" */
+const PROMISED = /(AAYE\s?GE|AAYEN\s?GE|AAEN?GE|AA\s?JAY|AA\s?JAEG|KAR\s?DEN?GE|KARWA\s?DEN?GE|DE\s?DEN?GE|BHEJ\s?DEN?GE|HO\s?JAY|KARWATE|KARTE\s?HAI|DEN?GE)/i;
+/* dates written inside remarks — "30-08 2026", "21/08/2026" — are never amounts */
+const DATE_SRC = '\\b\\d{1,2}\\s?[-/.]\\s?\\d{1,2}(?:\\s?[-/.]\\s?\\d{2,4})?\\b|\\b(?:19[5-9]\\d|20[0-4]\\d)\\b';
 
 function toValue(raw) {
   const m = String(raw).replace(/₹/g, '').trim().match(/^([\d,]+(?:\.\d+)?)\s*([A-Za-z]*)$/);
@@ -272,19 +278,28 @@ function toValue(raw) {
 /** Marks up one remark and returns any figures that read as money received. */
 function readRemark(text) {
   const t = String(text || '');
+
+  const dates = [];
+  const dre = new RegExp(DATE_SRC, 'gi');
+  let d;
+  while ((d = dre.exec(t)) !== null) dates.push([d.index, dre.lastIndex]);
+  const isDate = (a, b) => dates.some(r => a < r[1] && b > r[0]);
+
   const re = new RegExp(MONEY_SRC, 'gi');
   let html = '', last = 0, m;
   const received = [];
   while ((m = re.exec(t)) !== null) {
+    if (isDate(m.index, re.lastIndex)) continue;          // it is a date, leave it alone
+
     const after  = t.slice(re.lastIndex, re.lastIndex + 45);
     const before = t.slice(Math.max(0, m.index - 25), m.index);
-    const pd = STILL_DUE.exec(after), rc = CAME_IN.exec(after);
-    let kind = 'none';
-    if (pd && rc)      kind = pd.index < rc.index ? 'due' : 'in';
-    else if (pd)       kind = 'due';
-    else if (rc)       kind = 'in';
-    else if (STILL_DUE.test(before)) kind = 'due';
-    else if (CAME_IN.test(before))   kind = 'in';
+    const hits = [['due', STILL_DUE.exec(after)], ['soon', PROMISED.exec(after)], ['in', CAME_IN.exec(after)]]
+      .filter(h => h[1]).sort((a, b) => a[1].index - b[1].index);
+
+    let kind = hits.length ? hits[0][0]
+      : STILL_DUE.test(before) ? 'due'
+      : PROMISED.test(before)  ? 'soon'
+      : CAME_IN.test(before)   ? 'in' : 'none';
 
     html += esc(t.slice(last, m.index)) + `<mark class="m-${kind}">${esc(m[1])}</mark>`;
     last = re.lastIndex;
@@ -536,7 +551,7 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 5 · remark figures read as received are counted in; duplicate invoice entries merged.</p>
+    <p>Build 6 · dates and promised amounts are no longer counted as money received.</p>
     <p><button id="signout">Sign out of this device</button></p>
   </div></footer>`;
 }
@@ -559,11 +574,17 @@ function wire() {
   if (rm) rm.onclick = () => { state.useRemarks = !state.useRemarks; render(); };
 
   const so = document.getElementById('signout');
-  if (so) so.onclick = () => { forget(); PASS = ''; DATA = null; actions.hidden = true;
-                               stamp.textContent = 'Locked'; renderGate(''); };
+  if (so) so.onclick = signOut;
+}
+
+function signOut() {
+  forget(); PASS = ''; DATA = null;
+  actions.hidden = true; stamp.textContent = 'Locked';
+  renderGate('');
 }
 
 document.getElementById('btnRefresh').onclick = load;
+document.getElementById('btnSignout').onclick = signOut;
 document.getElementById('btnPrint').onclick = () => window.print();
 document.getElementById('btnCsv').onclick = () => {
   if (!DATA) return;
