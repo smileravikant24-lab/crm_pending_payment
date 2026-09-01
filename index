@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pending payments · Satija Paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12211b; --ink2:#53625a; --ink3:#8a968f;
+  --brand:#17703f; --brand-deep:#0d4527; --brand-tint:#e7f0e9;
+  --paper:#f6f5f0; --card:#fff; --rule:#ded9cd;
+  --red:#a8321e; --red-tint:#f8e9e6;
+  --amber:#a3660f; --amber-tint:#faf0e0;
+  --blue:#2a5c7a; --violet:#5b4a86;
+  --w:1240px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font:400 15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:Archivo,"IBM Plex Sans",system-ui,sans-serif;font-weight:600;margin:0;letter-spacing:-.01em}
+button,select,input{font:inherit;color:inherit}
+a{color:var(--brand-deep)}
+.wrap{max-width:var(--w);margin:0 auto;padding:0 20px}
+
+/* ---------- masthead ---------- */
+.masthead{background:var(--brand-deep);color:#eef3ef;border-bottom:3px solid var(--brand)}
+.masthead .wrap{display:flex;align-items:center;gap:16px;min-height:66px;flex-wrap:wrap}
+.logo{height:36px;width:auto;background:#fff;border-radius:3px;padding:3px 6px}
+.mast-title{font-family:Archivo;font-weight:600;font-size:17px;line-height:1.2}
+.mast-sub{font-size:12.5px;color:#a9c4b4}
+.mast-actions{margin-left:auto;display:flex;gap:8px}
+.btn{
+  background:transparent;border:1px solid #4a7a60;color:#eef3ef;border-radius:4px;
+  padding:7px 13px;font-size:13.5px;cursor:pointer;transition:background .12s
+}
+.btn:hover{background:#17703f}
+.btn:focus-visible{outline:2px solid #9fd6b4;outline-offset:2px}
+.btn-solid{background:var(--brand);border-color:var(--brand)}
+
+/* ---------- headline figure ---------- */
+.hero{padding:30px 0 22px;border-bottom:1px solid var(--rule)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:end}
+.hero-label{font-size:13.5px;color:var(--ink2);margin-bottom:2px}
+.hero-figure{font-family:Archivo;font-weight:700;font-size:clamp(40px,7vw,66px);line-height:1;letter-spacing:-.03em}
+.hero-note{font-size:13.5px;color:var(--ink2);margin-top:10px;max-width:56ch}
+.hero-note b{font-weight:600;color:var(--ink)}
+
+.splitbar{display:flex;height:34px;border-radius:3px;overflow:hidden;border:1px solid var(--rule)}
+.splitbar span{display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500;min-width:0;overflow:hidden;white-space:nowrap}
+.seg-FMS{background:var(--brand)}
+.seg-Split{background:var(--blue)}
+.seg-Manually{background:var(--violet)}
+.splitkey{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.splitkey div{display:flex;gap:7px;align-items:baseline}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block;transform:translateY(-1px)}
+.splitkey b{font-weight:600}
+.splitkey span.mut{color:var(--ink2)}
+
+/* ---------- week strip ---------- */
+.week{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--rule);background:var(--card)}
+.week div{flex:1 1 160px;padding:14px 20px;border-right:1px solid var(--rule)}
+.week div:last-child{border-right:0}
+.week .k{font-size:12.5px;color:var(--ink2)}
+.week .v{font-family:Archivo;font-weight:600;font-size:22px;margin-top:2px}
+.v.warn{color:var(--red)}
+
+/* ---------- ageing ---------- */
+.section{padding:26px 0}
+.section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.section-head h2{font-size:17px}
+.section-head p{margin:0;font-size:13.5px;color:var(--ink2)}
+.ageing{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.age{
+  background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--brand);
+  border-radius:3px;padding:12px 14px;cursor:pointer;text-align:left;width:100%
+}
+.age:hover{border-color:var(--ink3)}
+.age[aria-pressed="true"]{background:var(--brand-tint);border-color:var(--brand)}
+.age .k{font-size:12.5px;color:var(--ink2)}
+.age .v{font-family:Archivo;font-weight:600;font-size:20px;margin-top:3px}
+.age .n{font-size:12.5px;color:var(--ink2)}
+.age.hot{border-left-color:var(--red)}
+.age.warm{border-left-color:var(--amber)}
+.age.cool{border-left-color:var(--ink3)}
+
+/* ---------- panels ---------- */
+.panels{display:grid;grid-template-columns:1.25fr 1fr;gap:26px}
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:16px 18px}
+.panel h3{font-size:14.5px;margin-bottom:2px}
+.panel p.sub{margin:0 0 12px;font-size:12.5px;color:var(--ink2)}
+.rank{display:grid;gap:9px}
+.rank-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:baseline;font-size:13.5px}
+.rank-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-row .amt{font-weight:600}
+.rank-bar{grid-column:1/-1;height:5px;background:#eceae2;border-radius:2px;overflow:hidden;margin-top:-4px}
+.rank-bar i{display:block;height:100%;background:var(--brand)}
+
+/* ---------- controls ---------- */
+.controls{
+  position:sticky;top:0;z-index:20;background:var(--paper);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  padding:12px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center
+}
+.controls input[type=search],.controls select{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:8px 10px;font-size:14px
+}
+.controls input[type=search]{flex:1 1 230px;min-width:0}
+.controls .spacer{flex:1 1 auto}
+.count{font-size:13.5px;color:var(--ink2)}
+.ghost{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:8px 12px;font-size:13.5px;cursor:pointer}
+.ghost:hover{border-color:var(--ink3)}
+.ghost[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ---------- ledger entries ---------- */
+.ledger{display:grid;gap:10px;padding:18px 0 40px}
+.group-head{
+  display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:11px 14px;background:var(--ink);color:#fff;border-radius:3px;margin-top:10px
+}
+.group-head h3{font-size:14.5px;color:#fff}
+.group-head .g-amt{font-family:Archivo;font-weight:600}
+.group-head .g-n{font-size:12.5px;color:#b9c4bd;margin-left:8px;font-family:"IBM Plex Sans"}
+
+.entry{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  border-left:4px solid var(--brand);padding:14px 16px;
+  display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr) minmax(0,1.1fr);
+  gap:14px 22px;align-items:start
+}
+.entry.src-Split{border-left-color:var(--blue)}
+.entry.src-Manually{border-left-color:var(--violet)}
+.entry.late{background:#fffcfb}
+.who .nm{font-family:Archivo;font-weight:600;font-size:15.5px;line-height:1.25}
+.who .meta{font-size:12.5px;color:var(--ink2);margin-top:3px;line-height:1.55}
+.who .meta i{font-style:normal;color:var(--ink3)}
+.tag{
+  display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:2px;
+  background:var(--brand-tint);color:var(--brand-deep);margin-right:6px;vertical-align:1px
+}
+.tag.t-Split{background:#e3edf3;color:#1d4359}
+.tag.t-Manually{background:#eceaf4;color:#413466}
+
+.money{text-align:right}
+.money .out{font-family:Archivo;font-weight:700;font-size:20px;line-height:1.1}
+.money .out.late{color:var(--red)}
+.money .brk{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.55}
+
+.state .pill{
+  display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:2px;
+  background:#eceae2;color:var(--ink2)
+}
+.state .pill.hot{background:var(--red-tint);color:var(--red)}
+.state .pill.warm{background:var(--amber-tint);color:var(--amber)}
+.state .step{font-size:12.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
+
+.trail{grid-column:1/-1;border-top:1px dashed var(--rule);padding-top:11px;display:grid;gap:7px}
+.note{display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;font-size:13.5px;align-items:baseline}
+.note .st{font-size:11px;font-weight:600;color:var(--ink3);padding-top:2px}
+.note .tx{color:var(--ink);word-break:break-word}
+.note .dt{color:var(--ink3);font-size:12px;margin-left:6px;white-space:nowrap}
+.trail .none{font-size:13px;color:var(--ink3);font-style:italic}
+
+/* ---------- states ---------- */
+.state-msg{padding:60px 0;text-align:center;color:var(--ink2)}
+.state-msg h2{font-size:19px;margin-bottom:8px;color:var(--ink)}
+.setup{max-width:620px;margin:50px auto;background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:26px 28px}
+.setup h2{font-size:19px;margin-bottom:6px}
+.setup p{font-size:14px;color:var(--ink2);line-height:1.6}
+.setup input{width:100%;padding:10px 12px;border:1px solid var(--rule);border-radius:3px;font-size:14px;margin:12px 0}
+.setup button{background:var(--brand);color:#fff;border:0;border-radius:3px;padding:10px 18px;font-size:14px;cursor:pointer}
+.setup code{background:var(--paper);padding:2px 5px;border-radius:2px;font-size:13px}
+.err{background:var(--red-tint);border:1px solid #e6bfb7;color:var(--red);padding:12px 14px;border-radius:3px;font-size:13.5px;margin:16px 0}
+
+footer{border-top:1px solid var(--rule);padding:20px 0 34px;font-size:12.5px;color:var(--ink2)}
+footer p{margin:0 0 5px;max-width:78ch}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .hero-grid,.panels{grid-template-columns:1fr;gap:22px}
+  .entry{grid-template-columns:1fr;gap:10px}
+  .money{text-align:left}
+  .controls{position:static}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- print: the weekly sheet for the owner ---------- */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;font-size:10.5pt}
+  .masthead{background:#fff;color:var(--ink);border-bottom:2px solid var(--brand)}
+  .mast-sub{color:var(--ink2)}
+  .mast-actions,.controls,.age{display:none!important}
+  .ageing{display:grid!important;grid-template-columns:repeat(4,1fr)}
+  .ageing .age{display:block!important;border:1px solid #ccc}
+  .entry,.panel,.group-head{break-inside:avoid;page-break-inside:avoid}
+  .week,.panel,.entry{border-color:#ccc}
+  footer{border-color:#ccc}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <img class="logo" src="https://lh3.googleusercontent.com/d/1yncNH52_uB8UKEaz6ut1eoqqMwN0gnEl" alt="Satija Paper" onerror="this.style.display='none'">
+    <div>
+      <div class="mast-title">Pending payments</div>
+      <div class="mast-sub" id="stamp">Loading…</div>
+    </div>
+    <div class="mast-actions">
+      <button class="btn" id="btnCsv">Download CSV</button>
+      <button class="btn" id="btnPrint">Print report</button>
+      <button class="btn btn-solid" id="btnRefresh">Refresh</button>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+  <div class="state-msg wrap"><h2>Loading collections data…</h2><p>Reading the FMS, Split and Manually tabs.</p></div>
+</main>
+
+<script>
+/* ================================================================
+   1. Paste your Apps Script Web App URL here (ends with /exec)
+   ================================================================ */
+let API_URL = "";
+
+/* Allows testing without editing the file: index.html?api=<url> */
+const qp = new URLSearchParams(location.search);
+if (qp.get('api')) API_URL = qp.get('api');
+try { if (!API_URL) API_URL = localStorage.getItem('satija_api') || ""; } catch (e) {}
+
+const app = document.getElementById('app');
+let DATA = null;
+const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false };
+
+const BUCKETS = [
+  {id:'notdue', label:'Not due yet',    cls:'cool', test:d => d !== null && d < 0},
+  {id:'d15',    label:'1 to 15 days',   cls:'',     test:d => d !== null && d >= 0  && d <= 15},
+  {id:'d30',    label:'16 to 30 days',  cls:'warm', test:d => d !== null && d > 15 && d <= 30},
+  {id:'d60',    label:'31 to 60 days',  cls:'warm', test:d => d !== null && d > 30 && d <= 60},
+  {id:'d60p',   label:'Over 60 days',   cls:'hot',  test:d => d !== null && d > 60}
+];
+
+/* ---------------- formatting ---------------- */
+const inr     = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+const compact = n => {
+  n = n || 0;
+  if (n >= 1e7) return '₹' + (n / 1e7).toFixed(2) + ' Cr';
+  if (n >= 1e5) return '₹' + (n / 1e5).toFixed(2) + ' L';
+  return inr(n);
+};
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const bucketOf = d => (BUCKETS.find(b => b.test(d)) || {}).id || 'unknown';
+
+/* ---------------- data loading ---------------- */
+function load() {
+  if (!API_URL) return renderSetup();
+  app.innerHTML = '<div class="state-msg wrap"><h2>Loading collections data…</h2>' +
+                  '<p>Reading the FMS, Split and Manually tabs.</p></div>';
+  const url = API_URL + (API_URL.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  fetch(url)
+    .then(r => r.json())
+    .then(handle)
+    .catch(() => jsonp(url));           // some browsers block the redirect; fall back
+}
+
+function jsonp(url) {
+  const cb = '__satija_' + Date.now();
+  window[cb] = d => { delete window[cb]; s.remove(); handle(d); };
+  const s = document.createElement('script');
+  s.src = url + '&callback=' + cb;
+  s.onerror = () => renderError('Could not reach the Apps Script web app. Check that it is deployed with access set to "Anyone".');
+  document.body.appendChild(s);
+}
+
+function handle(d) {
+  if (!d || !d.ok) return renderError((d && d.error) || 'The web app returned an unexpected response.');
+  DATA = d;
+  document.getElementById('stamp').textContent =
+    'Updated ' + d.generatedAt + ' · ' + d.rows.length + ' open items of ' + d.totalRecords + ' records';
+  render();
+}
+
+/* ---------------- filtering ---------------- */
+function visible() {
+  const q = state.q.trim().toLowerCase();
+  return DATA.rows.filter(r => {
+    if (state.src && r.src !== state.src) return false;
+    if (state.person && r.person !== state.person) return false;
+    if (state.bucket && bucketOf(r.ageDays) !== state.bucket) return false;
+    if (q) {
+      const hay = [r.party, r.contact, r.phone, r.invoice, r.key, r.person, r.place,
+                   r.stageLabel, r.paymentStatus].join(' ').toLowerCase() +
+                  ' ' + r.remarks.map(x => x.text).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort(cmp);
+}
+
+function cmp(a, b) {
+  if (state.sort === 'age')   return (b.ageDays ?? -9999) - (a.ageDays ?? -9999);
+  if (state.sort === 'party') return a.party.localeCompare(b.party);
+  return b.outstanding - a.outstanding;
+}
+
+const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
+
+/* ---------------- render ---------------- */
+function render() {
+  const rows = visible();
+  app.innerHTML =
+    hero() +
+    weekStrip() +
+    '<div class="wrap">' + ageing() + panels() + '</div>' +
+    '<div class="wrap">' + controls(rows) + '</div>' +
+    '<div class="wrap"><div class="ledger">' + ledger(rows) + '</div></div>' +
+    footerHtml();
+  wire();
+}
+
+function hero() {
+  const all = DATA.rows;
+  const total = sum(all, r => r.outstanding);
+  const bySrc = {};
+  all.forEach(r => { bySrc[r.src] = bySrc[r.src] || { label:r.srcLabel, amt:0, n:0 };
+                     bySrc[r.src].amt += r.outstanding; bySrc[r.src].n++; });
+  const order = ['FMS','Split','Manually'].filter(k => bySrc[k]);
+  const segs = order.map(k => {
+    const pc = total ? bySrc[k].amt / total * 100 : 0;
+    return `<span class="seg-${k}" style="flex:0 0 ${pc.toFixed(2)}%">${pc > 9 ? compact(bySrc[k].amt) : ''}</span>`;
+  }).join('');
+  const key = order.map(k =>
+    `<div><span class="dot seg-${k}"></span><b>${esc(bySrc[k].label)}</b>
+     <span class="mut">${compact(bySrc[k].amt)} · ${bySrc[k].n} items</span></div>`).join('');
+
+  const parties = new Set(all.map(r => r.party.trim().toUpperCase())).size;
+  const over30  = all.filter(r => r.ageDays !== null && r.ageDays > 30);
+  const noAmt   = all.filter(r => !r.amount);
+
+  return `<section class="hero"><div class="wrap"><div class="hero-grid">
+    <div>
+      <div class="hero-label">Money still to come in, across all three trackers</div>
+      <div class="hero-figure">${compact(total)}</div>
+      <p class="hero-note">
+        <b>${all.length}</b> open items across <b>${parties}</b> parties.
+        <b>${compact(sum(over30, r => r.outstanding))}</b> of it is more than 30 days past due.
+        ${noAmt.length ? `<b>${noAmt.length}</b> item${noAmt.length > 1 ? 's have' : ' has'} no invoice value filled in the sheet, so the real figure is higher.` : ''}
+      </p>
+    </div>
+    <div>
+      <div class="splitbar">${segs}</div>
+      <div class="splitkey">${key}</div>
+    </div>
+  </div></div></section>`;
+}
+
+function weekStrip() {
+  const all = DATA.rows;
+  const overdueSteps = all.filter(r => r.stageOverdue !== null && r.stageOverdue > 0).length;
+  const noNotes = all.filter(r => !r.remarks.length).length;
+  return `<section class="week"><div class="wrap" style="display:flex;flex-wrap:wrap;padding:0">
+    <div><div class="k">Collected in the last 7 days</div><div class="v">${compact(DATA.collectedThisWeek)}</div></div>
+    <div><div class="k">Invoices closed this week</div><div class="v">${DATA.closedThisWeek}</div></div>
+    <div><div class="k">Follow-up calls past their date</div><div class="v ${overdueSteps ? 'warn' : ''}">${overdueSteps}</div></div>
+    <div><div class="k">Open items with no remark yet</div><div class="v ${noNotes ? 'warn' : ''}">${noNotes}</div></div>
+  </div></section>`;
+}
+
+function ageing() {
+  const all = DATA.rows;
+  const cards = BUCKETS.map(b => {
+    const set = all.filter(r => b.test(r.ageDays));
+    const on  = state.bucket === b.id;
+    return `<button class="age ${b.cls}" data-bucket="${b.id}" aria-pressed="${on}">
+      <div class="k">${b.label}</div>
+      <div class="v">${compact(sum(set, r => r.outstanding))}</div>
+      <div class="n">${set.length} item${set.length === 1 ? '' : 's'}</div>
+    </button>`;
+  }).join('');
+  return `<section class="section">
+    <div class="section-head"><h2>How old the money is</h2>
+    <p>Counted from the payment due date. Tap a band to filter the list below.</p></div>
+    <div class="ageing">${cards}</div></section>`;
+}
+
+function panels() {
+  const all = DATA.rows;
+  const byParty = {}, byPerson = {};
+  all.forEach(r => {
+    const p = r.party.trim().toUpperCase();
+    byParty[p] = byParty[p] || { amt:0, n:0 };
+    byParty[p].amt += r.outstanding; byParty[p].n++;
+    const s = r.person || 'Not recorded';
+    byPerson[s] = byPerson[s] || { amt:0, n:0 };
+    byPerson[s].amt += r.outstanding; byPerson[s].n++;
+  });
+  const total = sum(all, r => r.outstanding) || 1;
+  const rank = (obj, limit) => Object.entries(obj)
+    .sort((a, b) => b[1].amt - a[1].amt).slice(0, limit)
+    .map(([k, v]) => `<div class="rank-row"><span class="nm" title="${esc(k)}">${esc(k)}</span>
+        <span class="amt">${compact(v.amt)}</span></div>
+      <div class="rank-bar"><i style="width:${(v.amt / total * 100).toFixed(1)}%"></i></div>`).join('');
+
+  const top = Object.entries(byParty).sort((a, b) => b[1].amt - a[1].amt);
+  const share = top.length ? (top[0][1].amt / total * 100) : 0;
+  const top3  = top.slice(0, 3).reduce((t, x) => t + x[1].amt, 0) / total * 100;
+
+  return `<section class="section"><div class="panels">
+    <div class="panel">
+      <h3>Where the money is stuck</h3>
+      <p class="sub">${top[0] ? esc(top[0][0]) + ' alone holds ' + share.toFixed(0) + '% of it; the top three hold ' + top3.toFixed(0) + '%.' : ''}</p>
+      <div class="rank">${rank(byParty, 10)}</div>
+    </div>
+    <div class="panel">
+      <h3>Whose customers owe it</h3>
+      <p class="sub">Outstanding grouped by the sales person on the order.</p>
+      <div class="rank">${rank(byPerson, 8)}</div>
+    </div>
+  </div></section>`;
+}
+
+function controls(rows) {
+  const people = [...new Set(DATA.rows.map(r => r.person).filter(Boolean))].sort();
+  const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
+  return `<div class="controls">
+    <input type="search" id="q" placeholder="Search party, invoice, phone or remark text" value="${esc(state.q)}">
+    <select id="src">${opt('', 'All three trackers', state.src)}
+      ${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
+    <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
+    <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
+    <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
+    <span class="spacer"></span>
+    <span class="count">${rows.length} shown · ${compact(sum(rows, r => r.outstanding))}</span>
+  </div>`;
+}
+
+function ledger(rows) {
+  if (!rows.length) return `<div class="state-msg"><h2>Nothing matches these filters</h2>
+    <p>Clear the search box or pick a different ageing band.</p></div>`;
+  if (!state.group) return rows.map(entry).join('');
+
+  const groups = {};
+  rows.forEach(r => { const k = r.party.trim().toUpperCase(); (groups[k] = groups[k] || []).push(r); });
+  return Object.entries(groups)
+    .sort((a, b) => sum(b[1], r => r.outstanding) - sum(a[1], r => r.outstanding))
+    .map(([k, list]) => `<div class="group-head"><h3>${esc(k)}<span class="g-n">${list.length} item${list.length === 1 ? '' : 's'}</span></h3>
+      <span class="g-amt">${compact(sum(list, r => r.outstanding))}</span></div>` +
+      list.map(entry).join('')).join('');
+}
+
+function entry(r) {
+  const late = r.ageDays !== null && r.ageDays > 30;
+  const ageTxt = r.ageDays === null ? 'No due date in sheet'
+    : r.ageDays < 0 ? Math.abs(r.ageDays) + ' days left to pay'
+    : r.ageDays + ' days past due';
+  const pillCls = r.ageDays === null ? '' : r.ageDays > 30 ? 'hot' : r.ageDays > 0 ? 'warm' : '';
+
+  const meta = [
+    r.contact, r.phone ? `<i>${esc(r.phone)}</i>` : '', r.place, r.person
+  ].filter(Boolean).join(' · ');
+
+  const ref = [
+    r.invoice ? 'Invoice ' + esc(r.invoice) : esc(r.key),
+    r.invoiceDate ? 'dated ' + esc(r.invoiceDate) : '',
+    r.dueDate ? 'due ' + esc(r.dueDate) : '',
+    r.terms ? esc(r.terms) : ''
+  ].filter(Boolean).join(' · ');
+
+  const notes = r.remarks.length
+    ? r.remarks.map(n => `<div class="note"><span class="st">${esc(n.stage)}</span>
+        <span class="tx">${esc(n.text)}${n.date ? `<span class="dt">${esc(n.date)}</span>` : ''}</span></div>`).join('')
+    : '<div class="none">No follow-up remark has been written for this one yet.</div>';
+
+  return `<article class="entry src-${r.src} ${late ? 'late' : ''}">
+    <div class="who">
+      <div class="nm"><span class="tag t-${r.src}">${esc(r.srcLabel)}</span>${esc(r.party)}</div>
+      <div class="meta">${meta}</div>
+      <div class="meta">${ref}</div>
+    </div>
+    <div class="money">
+      <div class="out ${late ? 'late' : ''}">${r.outstanding ? inr(r.outstanding) : 'Value not filled'}</div>
+      <div class="brk">${r.amount ? 'Invoice ' + inr(r.amount) : ''}${r.received ? ' · received ' + inr(r.received) : ''}</div>
+    </div>
+    <div class="state">
+      <span class="pill ${pillCls}">${esc(ageTxt)}</span>
+      <div class="step">${esc(r.stageLabel)}${r.stagePlanned ? ' · planned ' + esc(r.stagePlanned) : ''}
+        ${r.stageOverdue > 0 ? ' · call is ' + r.stageOverdue + ' days late' : ''}</div>
+      ${r.paymentStatus ? `<div class="step">Payment noted as ${esc(r.paymentStatus)}</div>` : ''}
+    </div>
+    <div class="trail">${notes}</div>
+  </article>`;
+}
+
+function footerHtml() {
+  const skipped = Object.keys(DATA.skipped || {});
+  return `<footer><div class="wrap">
+    <p>Built from the FMS, Split and Manually tabs. An item counts as pending until a stage records
+    a full payment, so half payments stay on the list with the balance shown.</p>
+    <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
+    counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
+    ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
+  </div></footer>`;
+}
+
+/* ---------------- interaction ---------------- */
+function wire() {
+  const q = document.getElementById('q');
+  if (q) {
+    q.oninput = e => { state.q = e.target.value; const p = e.target.selectionStart; render();
+                       const n = document.getElementById('q'); n.focus(); n.setSelectionRange(p, p); };
+  }
+  const bind = (id, key) => { const el = document.getElementById(id);
+    if (el) el.onchange = e => { state[key] = e.target.value; render(); }; };
+  bind('src', 'src'); bind('person', 'person'); bind('sort', 'sort');
+
+  const g = document.getElementById('grp');
+  if (g) g.onclick = () => { state.group = !state.group; render(); };
+
+  document.querySelectorAll('[data-bucket]').forEach(b => {
+    b.onclick = () => { state.bucket = state.bucket === b.dataset.bucket ? '' : b.dataset.bucket; render(); };
+  });
+}
+
+document.getElementById('btnRefresh').onclick = load;
+document.getElementById('btnPrint').onclick = () => window.print();
+document.getElementById('btnCsv').onclick = () => {
+  if (!DATA) return;
+  const head = ['Source','Party','Contact','Phone','Sales person','Invoice / key','Invoice date',
+                'Due date','Invoice amount','Received','Outstanding','Days past due',
+                'Current step','Payment status','All remarks'];
+  const cell = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const body = visible().map(r => [r.srcLabel, r.party, r.contact, r.phone, r.person,
+    r.invoice || r.key, r.invoiceDate, r.dueDate, r.amount, r.received, r.outstanding,
+    r.ageDays, r.stageLabel, r.paymentStatus,
+    r.remarks.map(n => n.stage + ': ' + n.text).join(' | ')].map(cell).join(','));
+  const blob = new Blob(['\uFEFF' + [head.map(cell).join(','), ...body].join('\n')],
+                        { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'satija-pending-payments-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
+/* ---------------- fallback screens ---------------- */
+function renderSetup() {
+  document.getElementById('stamp').textContent = 'Not connected yet';
+  app.innerHTML = `<div class="setup">
+    <h2>Connect the dashboard to your sheet</h2>
+    <p>Deploy <code>Code.gs</code> as a web app in Apps Script, then paste the URL that ends in
+       <code>/exec</code>. Open <code>index.html</code> and set <code>API_URL</code> to make it permanent
+       for everyone who opens the page.</p>
+    <input id="apiIn" placeholder="https://script.google.com/macros/s/…/exec">
+    <button id="apiGo">Connect</button>
+  </div>`;
+  document.getElementById('apiGo').onclick = () => {
+    const v = document.getElementById('apiIn').value.trim();
+    if (!v) return;
+    API_URL = v;
+    try { localStorage.setItem('satija_api', v); } catch (e) {}
+    load();
+  };
+}
+
+function renderError(msg) {
+  document.getElementById('stamp').textContent = 'Could not load';
+  app.innerHTML = `<div class="wrap"><div class="err">${esc(msg)}</div>
+    <p style="font-size:14px;color:var(--ink2)">Open the web app URL directly in a browser tab. If it asks you
+    to sign in, redeploy it with <b>Execute as: Me</b> and <b>Who has access: Anyone</b>.</p></div>`;
+}
+
+load();
+</script>
+</body>
+</html>
