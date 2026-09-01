@@ -477,6 +477,7 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
+    <p>Build 4 · money split into total, received and outstanding; figures written inside remarks are highlighted.</p>
     <p><button id="signout">Sign out of this device</button></p>
   </div></footer>`;
 }
