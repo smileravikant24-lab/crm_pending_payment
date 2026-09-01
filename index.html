@@ -129,6 +129,8 @@ a{color:var(--brand-deep)}
 .mrow.bal b{font-family:Archivo;font-size:19px;font-weight:700;line-height:1.15}
 .mrow.bal b.late{color:var(--red)}
 .mrow.miss b{color:var(--amber);font-weight:600}
+.mrow.said b{color:var(--amber);font-weight:600}
+.mrow.said span{color:var(--amber)}
 
 .state .pill{
   display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:2px;
@@ -143,7 +145,10 @@ a{color:var(--brand-deep)}
 .note .st{font-size:11px;font-weight:600;color:var(--ink3);padding-top:2px}
 .note .tx{color:var(--ink);word-break:break-word}
 .note .dt{color:var(--ink3);font-size:12px;margin-left:6px;white-space:nowrap}
-.note mark{background:#fbeecb;color:#6f4405;padding:0 4px;border-radius:2px;font-weight:600}
+.note mark{padding:0 4px;border-radius:2px;font-weight:600}
+.note mark.m-in{background:#dcefe2;color:#0f5230}
+.note mark.m-due{background:#f8e2dd;color:#8c2a19}
+.note mark.m-none{background:#fbeecb;color:#6f4405}
 .trail .none{font-size:13px;color:var(--ink3);font-style:italic}
 
 /* ---------- gate / states ---------- */
@@ -218,7 +223,7 @@ const actions = document.getElementById('actions');
 const STORE   = 'satija_pp_key';
 
 let DATA = null, PASS = '';
-const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false };
+const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true };
 
 const BUCKETS = [
   {id:'notdue', label:'Not due yet',   test:d => d !== null && d < 0},
@@ -241,16 +246,68 @@ const esc = s => String(s == null ? '' : s)
 const bucketOf = d => (BUCKETS.find(b => b.test(d)) || {}).id || 'unknown';
 const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
 
-/* Pooja often writes the figure inside the remark — "6 LAK KIYE HAI",
-   "223020 RED", "3,23,697.60 BAKI HAI". Pull those out so the owner sees them. */
-const MONEY_RE = new RegExp(
+/* Pooja often writes the figure inside the remark — "7 LAK AAYE HAI",
+   "223020 RED", "60160 ITNI BAKI HAI". The number alone does not say whether
+   the money came in or is still owed, so the words around it decide. */
+const MONEY_SRC =
   '(₹\\s?[\\d,]+(?:\\.\\d+)?' +
   '|\\b\\d+(?:\\.\\d+)?\\s*(?:LAKHS|LAKH|LAKS|LAK|LACS|LAC|CRORES|CRORE|CR|K)\\b' +
   '|\\b\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d+)?\\b' +
-  '|\\b\\d{4,}(?:\\.\\d+)?\\b)', 'gi');
+  '|\\b\\d{4,}(?:\\.\\d+)?\\b)';
+const UNITS = { LAKH:1e5, LAKHS:1e5, LAK:1e5, LAKS:1e5, LAC:1e5, LACS:1e5,
+                CR:1e7, CRORE:1e7, CRORES:1e7, K:1e3 };
 
-const markMoney = s => esc(s).replace(MONEY_RE, '<mark>$1</mark>');
-const hasMoney  = s => { MONEY_RE.lastIndex = 0; return MONEY_RE.test(String(s || '')); };
+/* money already in hand */
+const CAME_IN = /(AA\s?GAY|AA\s?GY|AAYE|AAYA|AAYI|MIL\s?GAY|MILE|KIYE|KAR\s?DIY|KARWA\s?DIY|DE\s?DIY|DIYE|CLEAR|RECEIV|CREDIT|TRANSFER|BHEJ|PAID)/i;
+/* money still owed */
+const STILL_DUE = /(BAKI|BACHA|\bRED\b|PENDING|MAGN|MANGN|LENI|LENA|DENA|CHAHIYE|\bDUE\b|KARWANA|KARNA|REH\s?GAY)/i;
+
+function toValue(raw) {
+  const m = String(raw).replace(/₹/g, '').trim().match(/^([\d,]+(?:\.\d+)?)\s*([A-Za-z]*)$/);
+  if (!m) return 0;
+  const n = parseFloat(m[1].replace(/,/g, ''));
+  return isNaN(n) ? 0 : n * (UNITS[(m[2] || '').toUpperCase()] || 1);
+}
+
+/** Marks up one remark and returns any figures that read as money received. */
+function readRemark(text) {
+  const t = String(text || '');
+  const re = new RegExp(MONEY_SRC, 'gi');
+  let html = '', last = 0, m;
+  const received = [];
+  while ((m = re.exec(t)) !== null) {
+    const after  = t.slice(re.lastIndex, re.lastIndex + 45);
+    const before = t.slice(Math.max(0, m.index - 25), m.index);
+    const pd = STILL_DUE.exec(after), rc = CAME_IN.exec(after);
+    let kind = 'none';
+    if (pd && rc)      kind = pd.index < rc.index ? 'due' : 'in';
+    else if (pd)       kind = 'due';
+    else if (rc)       kind = 'in';
+    else if (STILL_DUE.test(before)) kind = 'due';
+    else if (CAME_IN.test(before))   kind = 'in';
+
+    html += esc(t.slice(last, m.index)) + `<mark class="m-${kind}">${esc(m[1])}</mark>`;
+    last = re.lastIndex;
+    const v = toValue(m[1]);
+    if (kind === 'in' && v) received.push(v);
+  }
+  return { html: html + esc(t.slice(last)), received };
+}
+
+/** Total from remarks for a row. Repeats of the same figure count once. */
+function remarkReceived(r) {
+  if (r._rr !== undefined) return r._rr;
+  const seen = new Set();
+  r.remarks.forEach(n => readRemark(n.text).received.forEach(v => seen.add(v)));
+  let t = 0; seen.forEach(v => t += v);
+  if (r.amount) t = Math.min(t, Math.max(r.amount - r.received, 0));   // never below zero
+  return (r._rr = Math.round(t));
+}
+
+/** Outstanding, with or without the remark figures counted in. */
+const outOf = r => state.useRemarks && r.amount
+  ? Math.max(r.outstanding - remarkReceived(r), 0)
+  : r.outstanding;
 
 /* ---------------- access ---------------- */
 async function dailyToken(pass) {
@@ -326,7 +383,7 @@ function visible() {
 function cmp(a, b) {
   if (state.sort === 'age')   return (b.ageDays ?? -9999) - (a.ageDays ?? -9999);
   if (state.sort === 'party') return a.party.localeCompare(b.party);
-  return b.outstanding - a.outstanding;
+  return outOf(b) - outOf(a);
 }
 
 /* ---------------- render ---------------- */
@@ -342,10 +399,10 @@ function render() {
 
 function hero() {
   const all = DATA.rows;
-  const total = sum(all, r => r.outstanding);
+  const total = sum(all, r => outOf(r));
   const bySrc = {};
   all.forEach(r => { bySrc[r.src] = bySrc[r.src] || { label:r.srcLabel, amt:0, n:0 };
-                     bySrc[r.src].amt += r.outstanding; bySrc[r.src].n++; });
+                     bySrc[r.src].amt += outOf(r); bySrc[r.src].n++; });
   const order = ['FMS','Split','Manually'].filter(k => bySrc[k]);
   const segs = order.map(k => {
     const pc = total ? bySrc[k].amt / total * 100 : 0;
@@ -365,7 +422,7 @@ function hero() {
       <div class="hero-figure">${compact(total)}</div>
       <p class="hero-note">
         <b>${all.length}</b> open items across <b>${parties}</b> parties.
-        <b>${compact(sum(over30, r => r.outstanding))}</b> of it is more than 30 days past due.
+        <b>${compact(sum(over30, r => outOf(r)))}</b> of it is more than 30 days past due.
         ${noAmt.length ? `<b>${noAmt.length}</b> item${noAmt.length > 1 ? 's have' : ' has'} no invoice value filled in the sheet, so the real figure is higher.` : ''}
       </p>
     </div>
@@ -399,8 +456,9 @@ function controls(rows) {
     <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
     <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
+    <button class="ghost" id="rem" aria-pressed="${state.useRemarks}" title="Counts figures like '7 LAK AAYE HAI' as money received">Count remark amounts</button>
     <span class="spacer"></span>
-    <span class="count">${rows.length} shown · ${compact(sum(rows, r => r.outstanding))}</span>
+    <span class="count">${rows.length} shown · ${compact(sum(rows, r => outOf(r)))}</span>
   </div>`;
 }
 
@@ -412,13 +470,15 @@ function ledger(rows) {
   const groups = {};
   rows.forEach(r => { const k = r.party.trim().toUpperCase(); (groups[k] = groups[k] || []).push(r); });
   return Object.entries(groups)
-    .sort((a, b) => sum(b[1], r => r.outstanding) - sum(a[1], r => r.outstanding))
+    .sort((a, b) => sum(b[1], r => outOf(r)) - sum(a[1], r => outOf(r)))
     .map(([k, list]) => `<div class="group-head"><h3>${esc(k)}<span class="g-n">${list.length} item${list.length === 1 ? '' : 's'}</span></h3>
-      <span class="g-amt">${compact(sum(list, r => r.outstanding))}</span></div>` +
+      <span class="g-amt">${compact(sum(list, r => outOf(r)))}</span></div>` +
       list.map(entry).join('')).join('');
 }
 
 function entry(r) {
+  const outs = outOf(r);
+  const fromRemarks = state.useRemarks ? remarkReceived(r) : 0;
   const late = r.ageDays !== null && r.ageDays > 30;
   const ageTxt = r.ageDays === null ? 'No due date in sheet'
     : r.ageDays < 0 ? Math.abs(r.ageDays) + ' days left to pay'
@@ -431,21 +491,20 @@ function entry(r) {
     r.invoice ? 'Invoice ' + esc(r.invoice) : esc(r.key),
     r.invoiceDate ? 'dated ' + esc(r.invoiceDate) : '',
     r.dueDate ? 'due ' + esc(r.dueDate) : '',
-    r.terms ? esc(r.terms) : ''
+    r.terms ? esc(r.terms) : '',
+    r.mergedKeys ? 'entered ' + r.mergedKeys.length + ' times, merged' : ''
   ].filter(Boolean).join(' · ');
 
   const notes = r.remarks.length
     ? r.remarks.map(n => `<div class="note"><span class="st">${esc(n.stage)}</span>
-        <span class="tx">${markMoney(n.text)}${n.date ? `<span class="dt">${esc(n.date)}</span>` : ''}</span></div>`).join('')
+        <span class="tx">${readRemark(n.text).html}${n.date ? `<span class="dt">${esc(n.date)}</span>` : ''}</span></div>`).join('')
     : '<div class="none">No follow-up remark has been written for this one yet.</div>';
-
-  /* A figure typed into a remark, with nothing recorded in Amount Received, is worth flagging. */
-  const spoken = r.remarks.some(n => hasMoney(n.text)) && !r.received;
 
   const money = r.amount
     ? `<div class="mrow"><span>Invoice total</span><b>${inr(r.amount)}</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
-       <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(r.outstanding)}</b></div>`
+       ${fromRemarks ? `<div class="mrow said"><span>Said in remarks</span><b>+ ${inr(fromRemarks)}</b></div>` : ''}
+       <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(outs)}</b></div>`
     : `<div class="mrow miss"><span>Invoice total</span><b>Not filled in sheet</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
        <div class="mrow bal"><span>Outstanding</span><b>Unknown</b></div>`;
@@ -457,7 +516,7 @@ function entry(r) {
       <div class="meta">${ref}</div>
     </div>
     <div class="money">${money}
-      ${spoken ? '<div class="mrow miss"><span>Note</span><b>Amount mentioned in remark only</b></div>' : ''}
+      ${fromRemarks ? '<div class="mrow said"><span>Note</span><b>Not recorded in the sheet</b></div>' : ''}
     </div>
     <div class="state">
       <span class="pill ${pillCls}">${esc(ageTxt)}</span>
@@ -477,7 +536,7 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 4 · money split into total, received and outstanding; figures written inside remarks are highlighted.</p>
+    <p>Build 5 · remark figures read as received are counted in; duplicate invoice entries merged.</p>
     <p><button id="signout">Sign out of this device</button></p>
   </div></footer>`;
 }
@@ -496,6 +555,9 @@ function wire() {
   const g = document.getElementById('grp');
   if (g) g.onclick = () => { state.group = !state.group; render(); };
 
+  const rm = document.getElementById('rem');
+  if (rm) rm.onclick = () => { state.useRemarks = !state.useRemarks; render(); };
+
   const so = document.getElementById('signout');
   if (so) so.onclick = () => { forget(); PASS = ''; DATA = null; actions.hidden = true;
                                stamp.textContent = 'Locked'; renderGate(''); };
@@ -506,11 +568,12 @@ document.getElementById('btnPrint').onclick = () => window.print();
 document.getElementById('btnCsv').onclick = () => {
   if (!DATA) return;
   const head = ['Source','Party','Contact','Phone','Sales person','Invoice / key','Invoice date',
-                'Due date','Invoice amount','Received','Outstanding','Days past due',
+                'Due date','Invoice amount','Received (sheet)','Said in remarks','Outstanding','Days past due',
                 'Current step','Payment status','All remarks'];
   const cell = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
   const body = visible().map(r => [r.srcLabel, r.party, r.contact, r.phone, r.person,
-    r.invoice || r.key, r.invoiceDate, r.dueDate, r.amount, r.received, r.outstanding,
+    r.invoice || r.key, r.invoiceDate, r.dueDate, r.amount, r.received,
+    state.useRemarks ? remarkReceived(r) : 0, outOf(r),
     r.ageDays, r.stageLabel, r.paymentStatus,
     r.remarks.map(n => n.stage + ': ' + n.text).join(' | ')].map(cell).join(','));
   const blob = new Blob(['\uFEFF' + [head.map(cell).join(','), ...body].join('\n')],
