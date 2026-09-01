@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <title>Pending payments · Satija Paper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +37,7 @@ a{color:var(--brand-deep)}
 .logo{height:36px;width:auto;background:#fff;border-radius:3px;padding:3px 6px}
 .mast-title{font-family:Archivo;font-weight:600;font-size:17px;line-height:1.2}
 .mast-sub{font-size:12.5px;color:#a9c4b4}
-.mast-actions{margin-left:auto;display:flex;gap:8px}
+.mast-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
 .btn{
   background:transparent;border:1px solid #4a7a60;color:#eef3ef;border-radius:4px;
   padding:7px 13px;font-size:13.5px;cursor:pointer;transition:background .12s
@@ -45,7 +47,7 @@ a{color:var(--brand-deep)}
 .btn-solid{background:var(--brand);border-color:var(--brand)}
 
 /* ---------- headline figure ---------- */
-.hero{padding:30px 0 22px;border-bottom:1px solid var(--rule)}
+.hero{padding:30px 0 24px;border-bottom:1px solid var(--rule)}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:end}
 .hero-label{font-size:13.5px;color:var(--ink2);margin-bottom:2px}
 .hero-figure{font-family:Archivo;font-weight:700;font-size:clamp(40px,7vw,66px);line-height:1;letter-spacing:-.03em}
@@ -64,48 +66,17 @@ a{color:var(--brand-deep)}
 .splitkey span.mut{color:var(--ink2)}
 
 /* ---------- week strip ---------- */
-.week{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--rule);background:var(--card)}
+.week{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--rule);background:var(--card);padding:0}
 .week div{flex:1 1 160px;padding:14px 20px;border-right:1px solid var(--rule)}
 .week div:last-child{border-right:0}
 .week .k{font-size:12.5px;color:var(--ink2)}
 .week .v{font-family:Archivo;font-weight:600;font-size:22px;margin-top:2px}
 .v.warn{color:var(--red)}
 
-/* ---------- ageing ---------- */
-.section{padding:26px 0}
-.section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.section-head h2{font-size:17px}
-.section-head p{margin:0;font-size:13.5px;color:var(--ink2)}
-.ageing{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.age{
-  background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--brand);
-  border-radius:3px;padding:12px 14px;cursor:pointer;text-align:left;width:100%
-}
-.age:hover{border-color:var(--ink3)}
-.age[aria-pressed="true"]{background:var(--brand-tint);border-color:var(--brand)}
-.age .k{font-size:12.5px;color:var(--ink2)}
-.age .v{font-family:Archivo;font-weight:600;font-size:20px;margin-top:3px}
-.age .n{font-size:12.5px;color:var(--ink2)}
-.age.hot{border-left-color:var(--red)}
-.age.warm{border-left-color:var(--amber)}
-.age.cool{border-left-color:var(--ink3)}
-
-/* ---------- panels ---------- */
-.panels{display:grid;grid-template-columns:1.25fr 1fr;gap:26px}
-.panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:16px 18px}
-.panel h3{font-size:14.5px;margin-bottom:2px}
-.panel p.sub{margin:0 0 12px;font-size:12.5px;color:var(--ink2)}
-.rank{display:grid;gap:9px}
-.rank-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:baseline;font-size:13.5px}
-.rank-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rank-row .amt{font-weight:600}
-.rank-bar{grid-column:1/-1;height:5px;background:#eceae2;border-radius:2px;overflow:hidden;margin-top:-4px}
-.rank-bar i{display:block;height:100%;background:var(--brand)}
-
 /* ---------- controls ---------- */
 .controls{
   position:sticky;top:0;z-index:20;background:var(--paper);
-  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);
   padding:12px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center
 }
 .controls input[type=search],.controls select{
@@ -167,23 +138,25 @@ a{color:var(--brand-deep)}
 .note .dt{color:var(--ink3);font-size:12px;margin-left:6px;white-space:nowrap}
 .trail .none{font-size:13px;color:var(--ink3);font-style:italic}
 
-/* ---------- states ---------- */
+/* ---------- gate / states ---------- */
 .state-msg{padding:60px 0;text-align:center;color:var(--ink2)}
 .state-msg h2{font-size:19px;margin-bottom:8px;color:var(--ink)}
-.setup{max-width:620px;margin:50px auto;background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:26px 28px}
-.setup h2{font-size:19px;margin-bottom:6px}
-.setup p{font-size:14px;color:var(--ink2);line-height:1.6}
-.setup input{width:100%;padding:10px 12px;border:1px solid var(--rule);border-radius:3px;font-size:14px;margin:12px 0}
-.setup button{background:var(--brand);color:#fff;border:0;border-radius:3px;padding:10px 18px;font-size:14px;cursor:pointer}
-.setup code{background:var(--paper);padding:2px 5px;border-radius:2px;font-size:13px}
-.err{background:var(--red-tint);border:1px solid #e6bfb7;color:var(--red);padding:12px 14px;border-radius:3px;font-size:13.5px;margin:16px 0}
+.gate{max-width:430px;margin:70px auto;background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:28px 30px}
+.gate h2{font-size:19px;margin-bottom:6px}
+.gate p{font-size:14px;color:var(--ink2);line-height:1.6;margin:0}
+.gate input{width:100%;padding:11px 12px;border:1px solid var(--rule);border-radius:3px;font-size:15px;margin:16px 0 12px}
+.gate button{background:var(--brand);color:#fff;border:0;border-radius:3px;padding:11px 20px;font-size:14.5px;cursor:pointer;width:100%}
+.gate button:hover{background:var(--brand-deep)}
+.gate code{background:var(--paper);padding:2px 5px;border-radius:2px;font-size:13px}
+.err{background:var(--red-tint);border:1px solid #e6bfb7;color:var(--red);padding:11px 13px;border-radius:3px;font-size:13.5px;margin:14px 0}
 
 footer{border-top:1px solid var(--rule);padding:20px 0 34px;font-size:12.5px;color:var(--ink2)}
 footer p{margin:0 0 5px;max-width:78ch}
+footer button{background:none;border:0;padding:0;color:var(--brand-deep);text-decoration:underline;cursor:pointer;font-size:12.5px}
 
 /* ---------- responsive ---------- */
 @media (max-width:900px){
-  .hero-grid,.panels{grid-template-columns:1fr;gap:22px}
+  .hero-grid{grid-template-columns:1fr;gap:22px}
   .entry{grid-template-columns:1fr;gap:10px}
   .money{text-align:left}
   .controls{position:static}
@@ -196,11 +169,9 @@ footer p{margin:0 0 5px;max-width:78ch}
   body{background:#fff;font-size:10.5pt}
   .masthead{background:#fff;color:var(--ink);border-bottom:2px solid var(--brand)}
   .mast-sub{color:var(--ink2)}
-  .mast-actions,.controls,.age{display:none!important}
-  .ageing{display:grid!important;grid-template-columns:repeat(4,1fr)}
-  .ageing .age{display:block!important;border:1px solid #ccc}
-  .entry,.panel,.group-head{break-inside:avoid;page-break-inside:avoid}
-  .week,.panel,.entry{border-color:#ccc}
+  .mast-actions,.controls,footer button{display:none!important}
+  .entry,.group-head,.week{break-inside:avoid;page-break-inside:avoid}
+  .week,.entry{border-color:#ccc}
   footer{border-color:#ccc}
 }
 </style>
@@ -212,9 +183,9 @@ footer p{margin:0 0 5px;max-width:78ch}
     <img class="logo" src="https://lh3.googleusercontent.com/d/1yncNH52_uB8UKEaz6ut1eoqqMwN0gnEl" alt="Satija Paper" onerror="this.style.display='none'">
     <div>
       <div class="mast-title">Pending payments</div>
-      <div class="mast-sub" id="stamp">Loading…</div>
+      <div class="mast-sub" id="stamp">Locked</div>
     </div>
-    <div class="mast-actions">
+    <div class="mast-actions" id="actions" hidden>
       <button class="btn" id="btnCsv">Download CSV</button>
       <button class="btn" id="btnPrint">Print report</button>
       <button class="btn btn-solid" id="btnRefresh">Refresh</button>
@@ -222,31 +193,32 @@ footer p{margin:0 0 5px;max-width:78ch}
   </div>
 </header>
 
-<main id="app">
-  <div class="state-msg wrap"><h2>Loading collections data…</h2><p>Reading the FMS, Split and Manually tabs.</p></div>
-</main>
+<main id="app"></main>
 
 <script>
 /* ================================================================
-   1. Paste your Apps Script Web App URL here (ends with /exec)
+   SETUP — fill this in once and the dashboard never asks again.
+   Paste the Apps Script Web App URL that ends with /exec.
    ================================================================ */
-let API_URL = "";
+const API_URL = "";
 
-/* Allows testing without editing the file: index.html?api=<url> */
-const qp = new URLSearchParams(location.search);
-if (qp.get('api')) API_URL = qp.get('api');
-try { if (!API_URL) API_URL = localStorage.getItem('satija_api') || ""; } catch (e) {}
+/* The passcode is NOT stored in this file. It is typed once per browser
+   and kept locally, then turned into a daily token before every request. */
 
-const app = document.getElementById('app');
-let DATA = null;
+const app     = document.getElementById('app');
+const stamp   = document.getElementById('stamp');
+const actions = document.getElementById('actions');
+const STORE   = 'satija_pp_key';
+
+let DATA = null, PASS = '';
 const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false };
 
 const BUCKETS = [
-  {id:'notdue', label:'Not due yet',    cls:'cool', test:d => d !== null && d < 0},
-  {id:'d15',    label:'1 to 15 days',   cls:'',     test:d => d !== null && d >= 0  && d <= 15},
-  {id:'d30',    label:'16 to 30 days',  cls:'warm', test:d => d !== null && d > 15 && d <= 30},
-  {id:'d60',    label:'31 to 60 days',  cls:'warm', test:d => d !== null && d > 30 && d <= 60},
-  {id:'d60p',   label:'Over 60 days',   cls:'hot',  test:d => d !== null && d > 60}
+  {id:'notdue', label:'Not due yet',   test:d => d !== null && d < 0},
+  {id:'d15',    label:'1 to 15 days',  test:d => d !== null && d >= 0 && d <= 15},
+  {id:'d30',    label:'16 to 30 days', test:d => d !== null && d > 15 && d <= 30},
+  {id:'d60',    label:'31 to 60 days', test:d => d !== null && d > 30 && d <= 60},
+  {id:'d60p',   label:'Over 60 days',  test:d => d !== null && d > 60}
 ];
 
 /* ---------------- formatting ---------------- */
@@ -260,17 +232,40 @@ const compact = n => {
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const bucketOf = d => (BUCKETS.find(b => b.test(d)) || {}).id || 'unknown';
+const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
+
+/* ---------------- access ---------------- */
+async function dailyToken(pass) {
+  const day = new Date().toISOString().slice(0, 10);          // UTC date
+  const buf = new TextEncoder().encode(pass + '|' + day);
+  const dig = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(dig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function remember(pass) { try { localStorage.setItem(STORE, pass); } catch (e) {} }
+function recall()       { try { return localStorage.getItem(STORE) || ''; } catch (e) { return ''; } }
+function forget()       { try { localStorage.removeItem(STORE); } catch (e) {} }
+
+function start() {
+  if (!API_URL) return renderNoUrl();
+  if (!window.crypto || !crypto.subtle)
+    return renderGate('This page needs to run over https. Open the GitHub Pages link, not the file on disk.');
+  PASS = recall();
+  if (!PASS) return renderGate('');
+  load();
+}
 
 /* ---------------- data loading ---------------- */
-function load() {
-  if (!API_URL) return renderSetup();
+async function load() {
+  stamp.textContent = 'Loading…';
   app.innerHTML = '<div class="state-msg wrap"><h2>Loading collections data…</h2>' +
                   '<p>Reading the FMS, Split and Manually tabs.</p></div>';
-  const url = API_URL + (API_URL.includes('?') ? '&' : '?') + 'v=' + Date.now();
-  fetch(url)
-    .then(r => r.json())
-    .then(handle)
-    .catch(() => jsonp(url));           // some browsers block the redirect; fall back
+  let token;
+  try { token = await dailyToken(PASS); }
+  catch (e) { return renderGate('Could not build the access token in this browser.'); }
+
+  const url = API_URL + (API_URL.includes('?') ? '&' : '?') + 'token=' + token + '&v=' + Date.now();
+  fetch(url).then(r => r.json()).then(handle).catch(() => jsonp(url));
 }
 
 function jsonp(url) {
@@ -278,15 +273,18 @@ function jsonp(url) {
   window[cb] = d => { delete window[cb]; s.remove(); handle(d); };
   const s = document.createElement('script');
   s.src = url + '&callback=' + cb;
-  s.onerror = () => renderError('Could not reach the Apps Script web app. Check that it is deployed with access set to "Anyone".');
+  s.onerror = () => renderError('Could not reach the Apps Script web app. Check that the deployment access is set to "Anyone".');
   document.body.appendChild(s);
 }
 
 function handle(d) {
+  if (d && d.code === 'AUTH') { forget(); PASS = ''; return renderGate('That passcode did not work.'); }
   if (!d || !d.ok) return renderError((d && d.error) || 'The web app returned an unexpected response.');
+  remember(PASS);
   DATA = d;
-  document.getElementById('stamp').textContent =
-    'Updated ' + d.generatedAt + ' · ' + d.rows.length + ' open items of ' + d.totalRecords + ' records';
+  actions.hidden = false;
+  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + d.rows.length +
+                      ' open items of ' + d.totalRecords + ' records';
   render();
 }
 
@@ -313,15 +311,11 @@ function cmp(a, b) {
   return b.outstanding - a.outstanding;
 }
 
-const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
-
 /* ---------------- render ---------------- */
 function render() {
   const rows = visible();
   app.innerHTML =
-    hero() +
-    weekStrip() +
-    '<div class="wrap">' + ageing() + panels() + '</div>' +
+    hero() + weekStrip() +
     '<div class="wrap">' + controls(rows) + '</div>' +
     '<div class="wrap"><div class="ledger">' + ledger(rows) + '</div></div>' +
     footerHtml();
@@ -376,59 +370,6 @@ function weekStrip() {
   </div></section>`;
 }
 
-function ageing() {
-  const all = DATA.rows;
-  const cards = BUCKETS.map(b => {
-    const set = all.filter(r => b.test(r.ageDays));
-    const on  = state.bucket === b.id;
-    return `<button class="age ${b.cls}" data-bucket="${b.id}" aria-pressed="${on}">
-      <div class="k">${b.label}</div>
-      <div class="v">${compact(sum(set, r => r.outstanding))}</div>
-      <div class="n">${set.length} item${set.length === 1 ? '' : 's'}</div>
-    </button>`;
-  }).join('');
-  return `<section class="section">
-    <div class="section-head"><h2>How old the money is</h2>
-    <p>Counted from the payment due date. Tap a band to filter the list below.</p></div>
-    <div class="ageing">${cards}</div></section>`;
-}
-
-function panels() {
-  const all = DATA.rows;
-  const byParty = {}, byPerson = {};
-  all.forEach(r => {
-    const p = r.party.trim().toUpperCase();
-    byParty[p] = byParty[p] || { amt:0, n:0 };
-    byParty[p].amt += r.outstanding; byParty[p].n++;
-    const s = r.person || 'Not recorded';
-    byPerson[s] = byPerson[s] || { amt:0, n:0 };
-    byPerson[s].amt += r.outstanding; byPerson[s].n++;
-  });
-  const total = sum(all, r => r.outstanding) || 1;
-  const rank = (obj, limit) => Object.entries(obj)
-    .sort((a, b) => b[1].amt - a[1].amt).slice(0, limit)
-    .map(([k, v]) => `<div class="rank-row"><span class="nm" title="${esc(k)}">${esc(k)}</span>
-        <span class="amt">${compact(v.amt)}</span></div>
-      <div class="rank-bar"><i style="width:${(v.amt / total * 100).toFixed(1)}%"></i></div>`).join('');
-
-  const top = Object.entries(byParty).sort((a, b) => b[1].amt - a[1].amt);
-  const share = top.length ? (top[0][1].amt / total * 100) : 0;
-  const top3  = top.slice(0, 3).reduce((t, x) => t + x[1].amt, 0) / total * 100;
-
-  return `<section class="section"><div class="panels">
-    <div class="panel">
-      <h3>Where the money is stuck</h3>
-      <p class="sub">${top[0] ? esc(top[0][0]) + ' alone holds ' + share.toFixed(0) + '% of it; the top three hold ' + top3.toFixed(0) + '%.' : ''}</p>
-      <div class="rank">${rank(byParty, 10)}</div>
-    </div>
-    <div class="panel">
-      <h3>Whose customers owe it</h3>
-      <p class="sub">Outstanding grouped by the sales person on the order.</p>
-      <div class="rank">${rank(byPerson, 8)}</div>
-    </div>
-  </div></section>`;
-}
-
 function controls(rows) {
   const people = [...new Set(DATA.rows.map(r => r.person).filter(Boolean))].sort();
   const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
@@ -437,6 +378,7 @@ function controls(rows) {
     <select id="src">${opt('', 'All three trackers', state.src)}
       ${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
     <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
+    <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
     <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
     <span class="spacer"></span>
@@ -446,7 +388,7 @@ function controls(rows) {
 
 function ledger(rows) {
   if (!rows.length) return `<div class="state-msg"><h2>Nothing matches these filters</h2>
-    <p>Clear the search box or pick a different ageing band.</p></div>`;
+    <p>Clear the search box or set the age filter back to "Any age".</p></div>`;
   if (!state.group) return rows.map(entry).join('');
 
   const groups = {};
@@ -465,10 +407,8 @@ function entry(r) {
     : r.ageDays + ' days past due';
   const pillCls = r.ageDays === null ? '' : r.ageDays > 30 ? 'hot' : r.ageDays > 0 ? 'warm' : '';
 
-  const meta = [
-    r.contact, r.phone ? `<i>${esc(r.phone)}</i>` : '', r.place, r.person
-  ].filter(Boolean).join(' · ');
-
+  const meta = [r.contact, r.phone ? `<i>${esc(r.phone)}</i>` : '', r.place, r.person]
+    .filter(Boolean).join(' · ');
   const ref = [
     r.invoice ? 'Invoice ' + esc(r.invoice) : esc(r.key),
     r.invoiceDate ? 'dated ' + esc(r.invoiceDate) : '',
@@ -509,26 +449,27 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
+    <p><button id="signout">Sign out of this device</button></p>
   </div></footer>`;
 }
 
 /* ---------------- interaction ---------------- */
 function wire() {
   const q = document.getElementById('q');
-  if (q) {
-    q.oninput = e => { state.q = e.target.value; const p = e.target.selectionStart; render();
-                       const n = document.getElementById('q'); n.focus(); n.setSelectionRange(p, p); };
-  }
+  if (q) q.oninput = e => {
+    state.q = e.target.value; const p = e.target.selectionStart; render();
+    const n = document.getElementById('q'); n.focus(); n.setSelectionRange(p, p);
+  };
   const bind = (id, key) => { const el = document.getElementById(id);
     if (el) el.onchange = e => { state[key] = e.target.value; render(); }; };
-  bind('src', 'src'); bind('person', 'person'); bind('sort', 'sort');
+  bind('src','src'); bind('person','person'); bind('bucket','bucket'); bind('sort','sort');
 
   const g = document.getElementById('grp');
   if (g) g.onclick = () => { state.group = !state.group; render(); };
 
-  document.querySelectorAll('[data-bucket]').forEach(b => {
-    b.onclick = () => { state.bucket = state.bucket === b.dataset.bucket ? '' : b.dataset.bucket; render(); };
-  });
+  const so = document.getElementById('signout');
+  if (so) so.onclick = () => { forget(); PASS = ''; DATA = null; actions.hidden = true;
+                               stamp.textContent = 'Locked'; renderGate(''); };
 }
 
 document.getElementById('btnRefresh').onclick = load;
@@ -551,34 +492,41 @@ document.getElementById('btnCsv').onclick = () => {
   a.click();
 };
 
-/* ---------------- fallback screens ---------------- */
-function renderSetup() {
-  document.getElementById('stamp').textContent = 'Not connected yet';
-  app.innerHTML = `<div class="setup">
-    <h2>Connect the dashboard to your sheet</h2>
-    <p>Deploy <code>Code.gs</code> as a web app in Apps Script, then paste the URL that ends in
-       <code>/exec</code>. Open <code>index.html</code> and set <code>API_URL</code> to make it permanent
-       for everyone who opens the page.</p>
-    <input id="apiIn" placeholder="https://script.google.com/macros/s/…/exec">
-    <button id="apiGo">Connect</button>
+/* ---------------- gate screens ---------------- */
+function renderGate(msg) {
+  actions.hidden = true;
+  stamp.textContent = 'Locked';
+  app.innerHTML = `<div class="gate">
+    <h2>Enter the passcode</h2>
+    <p>Ask the office for it. It is saved on this device, so you only type it once.</p>
+    ${msg ? `<div class="err">${esc(msg)}</div>` : ''}
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Passcode">
+    <button id="go">Open dashboard</button>
   </div>`;
-  document.getElementById('apiGo').onclick = () => {
-    const v = document.getElementById('apiIn').value.trim();
-    if (!v) return;
-    API_URL = v;
-    try { localStorage.setItem('satija_api', v); } catch (e) {}
-    load();
-  };
+  const pw = document.getElementById('pw');
+  const go = () => { const v = pw.value.trim(); if (!v) return; PASS = v; load(); };
+  document.getElementById('go').onclick = go;
+  pw.onkeydown = e => { if (e.key === 'Enter') go(); };
+  pw.focus();
+}
+
+function renderNoUrl() {
+  app.innerHTML = `<div class="gate">
+    <h2>This copy is not set up yet</h2>
+    <p>Open <code>index.html</code>, find <code>const API_URL = ""</code> near the top of the script,
+       and paste the Apps Script web app URL that ends in <code>/exec</code>. Commit it and the
+       dashboard will connect on its own from then on.</p>
+  </div>`;
 }
 
 function renderError(msg) {
-  document.getElementById('stamp').textContent = 'Could not load';
+  stamp.textContent = 'Could not load';
   app.innerHTML = `<div class="wrap"><div class="err">${esc(msg)}</div>
     <p style="font-size:14px;color:var(--ink2)">Open the web app URL directly in a browser tab. If it asks you
     to sign in, redeploy it with <b>Execute as: Me</b> and <b>Who has access: Anyone</b>.</p></div>`;
 }
 
-load();
+start();
 </script>
 </body>
 </html>
