@@ -158,7 +158,10 @@ a{color:var(--brand-deep)}
 .gate{max-width:430px;margin:70px auto;background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:28px 30px}
 .gate h2{font-size:19px;margin-bottom:6px}
 .gate p{font-size:14px;color:var(--ink2);line-height:1.6;margin:0}
-.gate input{width:100%;padding:11px 12px;border:1px solid var(--rule);border-radius:3px;font-size:15px;margin:16px 0 12px}
+.pwbox{display:flex;gap:8px;margin:16px 0 12px}
+.gate input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--rule);border-radius:3px;font-size:15px}
+.gate .pwbox button{width:auto;flex:0 0 auto;background:var(--paper);color:var(--ink2);border:1px solid var(--rule);padding:0 14px;font-size:13.5px}
+.gate .pwbox button:hover{background:#eceae2;color:var(--ink)}
 .gate button{background:var(--brand);color:#fff;border:0;border-radius:3px;padding:11px 20px;font-size:14.5px;cursor:pointer;width:100%}
 .gate button:hover{background:var(--brand-deep)}
 .gate code{background:var(--paper);padding:2px 5px;border-radius:2px;font-size:13px}
@@ -225,11 +228,12 @@ const actions = document.getElementById('actions');
 const STORE   = 'satija_pp_key';
 
 let DATA = null, PASS = '';
-const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true };
+const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true, follow:'', week:'' };
 
 const BUCKETS = [
   {id:'notdue', label:'Not due yet',   test:d => d !== null && d < 0},
-  {id:'d15',    label:'1 to 15 days',  test:d => d !== null && d >= 0 && d <= 15},
+  {id:'d7',     label:'1 to 7 days',   test:d => d !== null && d >= 0 && d <= 7},
+  {id:'d15',    label:'8 to 15 days',  test:d => d !== null && d > 7  && d <= 15},
   {id:'d30',    label:'16 to 30 days', test:d => d !== null && d > 15 && d <= 30},
   {id:'d60',    label:'31 to 60 days', test:d => d !== null && d > 30 && d <= 60},
   {id:'d60p',   label:'Over 60 days',  test:d => d !== null && d > 60}
@@ -319,6 +323,28 @@ function remarkReceived(r) {
   return (r._rr = Math.round(t));
 }
 
+/* Which calendar week a bill belongs to, from its invoice date. */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function weekOf(r) {
+  if (r._wk !== undefined) return r._wk;
+  const p = String(r.invoiceDate || '').split('/');
+  if (p.length < 3) return (r._wk = null);
+  const d = new Date(+p[2], +p[1] - 1, +p[0]);
+  if (isNaN(d.getTime())) return (r._wk = null);
+
+  const start = new Date(d); start.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // Monday
+  const end   = new Date(start); end.setDate(start.getDate() + 6);
+  const thu   = new Date(start); thu.setDate(start.getDate() + 3);
+  const jan4  = new Date(thu.getFullYear(), 0, 4);
+  const wk1   = new Date(jan4); wk1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7));
+  const num   = 1 + Math.round((thu - wk1) / (7 * 864e5));
+  const show  = x => x.getDate() + ' ' + MON[x.getMonth()];
+
+  return (r._wk = { id: thu.getFullYear() + '-' + String(num).padStart(2, '0'),
+                    label: 'Week ' + num + ' · ' + show(start) + ' to ' + show(end),
+                    sort: start.getTime() });
+}
+
 /** Outstanding, with or without the remark figures counted in. */
 const outOf = r => state.useRemarks && r.amount
   ? Math.max(r.outstanding - remarkReceived(r), 0)
@@ -332,9 +358,11 @@ async function dailyToken(pass) {
   return [...new Uint8Array(dig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function remember(pass) { try { localStorage.setItem(STORE, pass); } catch (e) {} }
-function recall()       { try { return localStorage.getItem(STORE) || ''; } catch (e) { return ''; } }
-function forget()       { try { localStorage.removeItem(STORE); } catch (e) {} }
+/* sessionStorage, not localStorage: closing the browser clears it, so the
+   passcode is asked for again on the next visit. */
+function remember(pass) { try { sessionStorage.setItem(STORE, pass); } catch (e) {} }
+function recall()       { try { return sessionStorage.getItem(STORE) || ''; } catch (e) { return ''; } }
+function forget()       { try { sessionStorage.removeItem(STORE); localStorage.removeItem(STORE); } catch (e) {} }
 
 function start() {
   if (!API_URL) return renderNoUrl();
@@ -374,7 +402,7 @@ function handle(d) {
   DATA = d;
   actions.hidden = false;
   stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + d.rows.length +
-                      ' open items of ' + d.totalRecords + ' records';
+                      ' open bills of ' + d.totalRecords + ' records';
   render();
 }
 
@@ -385,6 +413,9 @@ function visible() {
     if (state.src && r.src !== state.src) return false;
     if (state.person && r.person !== state.person) return false;
     if (state.bucket && bucketOf(r.ageDays) !== state.bucket) return false;
+    if (state.follow === 'yes' && !r.remarks.length) return false;
+    if (state.follow === 'no'  &&  r.remarks.length) return false;
+    if (state.week) { const w = weekOf(r); if (!w || w.id !== state.week) return false; }
     if (q) {
       const hay = [r.party, r.contact, r.phone, r.invoice, r.key, r.person, r.place,
                    r.stageLabel, r.paymentStatus].join(' ').toLowerCase() +
@@ -405,7 +436,7 @@ function cmp(a, b) {
 function render() {
   const rows = visible();
   app.innerHTML =
-    hero() + weekStrip() +
+    hero() +
     '<div class="wrap">' + controls(rows) + '</div>' +
     '<div class="wrap"><div class="ledger">' + ledger(rows) + '</div></div>' +
     footerHtml();
@@ -425,7 +456,7 @@ function hero() {
   }).join('');
   const key = order.map(k =>
     `<div><span class="dot seg-${k}"></span><b>${esc(bySrc[k].label)}</b>
-     <span class="mut">${compact(bySrc[k].amt)} · ${bySrc[k].n} items</span></div>`).join('');
+     <span class="mut">${compact(bySrc[k].amt)} · ${bySrc[k].n} bills</span></div>`).join('');
 
   const parties = new Set(all.map(r => r.party.trim().toUpperCase())).size;
   const over30  = all.filter(r => r.ageDays !== null && r.ageDays > 30);
@@ -436,7 +467,7 @@ function hero() {
       <div class="hero-label">Money still to come in, across all three trackers</div>
       <div class="hero-figure">${compact(total)}</div>
       <p class="hero-note">
-        <b>${all.length}</b> open items across <b>${parties}</b> parties.
+        <b>${all.length}</b> open bills across <b>${parties}</b> parties.
         <b>${compact(sum(over30, r => outOf(r)))}</b> of it is more than 30 days past due.
         ${noAmt.length ? `<b>${noAmt.length}</b> item${noAmt.length > 1 ? 's have' : ' has'} no invoice value filled in the sheet, so the real figure is higher.` : ''}
       </p>
@@ -448,20 +479,11 @@ function hero() {
   </div></div></section>`;
 }
 
-function weekStrip() {
-  const all = DATA.rows;
-  const overdueSteps = all.filter(r => r.stageOverdue !== null && r.stageOverdue > 0).length;
-  const noNotes = all.filter(r => !r.remarks.length).length;
-  return `<section class="week"><div class="wrap" style="display:flex;flex-wrap:wrap;padding:0">
-    <div><div class="k">Collected in the last 7 days</div><div class="v">${compact(DATA.collectedThisWeek)}</div></div>
-    <div><div class="k">Invoices closed this week</div><div class="v">${DATA.closedThisWeek}</div></div>
-    <div><div class="k">Follow-up calls past their date</div><div class="v ${overdueSteps ? 'warn' : ''}">${overdueSteps}</div></div>
-    <div><div class="k">Open items with no remark yet</div><div class="v ${noNotes ? 'warn' : ''}">${noNotes}</div></div>
-  </div></section>`;
-}
-
 function controls(rows) {
   const people = [...new Set(DATA.rows.map(r => r.person).filter(Boolean))].sort();
+  const wmap = {};
+  DATA.rows.forEach(r => { const w = weekOf(r); if (w) wmap[w.id] = w; });
+  const weeks = Object.values(wmap).sort((a, b) => b.sort - a.sort);
   const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
   return `<div class="controls">
     <input type="search" id="q" placeholder="Search party, invoice, phone or remark text" value="${esc(state.q)}">
@@ -469,6 +491,8 @@ function controls(rows) {
       ${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
     <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
     <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
+    <select id="follow">${opt('', 'Followed up or not', state.follow)}${opt('yes', 'Follow up done', state.follow)}${opt('no', 'No follow up yet', state.follow)}</select>
+    <select id="week">${opt('', 'Any bill week', state.week)}${weeks.map(w => opt(w.id, w.label, state.week)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
     <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
     <button class="ghost" id="rem" aria-pressed="${state.useRemarks}" title="Counts figures like '7 LAK AAYE HAI' as money received">Count remark amounts</button>
@@ -486,7 +510,7 @@ function ledger(rows) {
   rows.forEach(r => { const k = r.party.trim().toUpperCase(); (groups[k] = groups[k] || []).push(r); });
   return Object.entries(groups)
     .sort((a, b) => sum(b[1], r => outOf(r)) - sum(a[1], r => outOf(r)))
-    .map(([k, list]) => `<div class="group-head"><h3>${esc(k)}<span class="g-n">${list.length} item${list.length === 1 ? '' : 's'}</span></h3>
+    .map(([k, list]) => `<div class="group-head"><h3>${esc(k)}<span class="g-n">${list.length} bill${list.length === 1 ? '' : 's'}</span></h3>
       <span class="g-amt">${compact(sum(list, r => outOf(r)))}</span></div>` +
       list.map(entry).join('')).join('');
 }
@@ -551,8 +575,8 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 6 · dates and promised amounts are no longer counted as money received.</p>
-    <p><button id="signout">Sign out of this device</button></p>
+    <p>Build 7 · follow-up and bill-week filters; passcode is asked again after the browser closes.</p>
+    <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
 
@@ -566,6 +590,7 @@ function wire() {
   const bind = (id, key) => { const el = document.getElementById(id);
     if (el) el.onchange = e => { state[key] = e.target.value; render(); }; };
   bind('src','src'); bind('person','person'); bind('bucket','bucket'); bind('sort','sort');
+  bind('follow','follow'); bind('week','week');
 
   const g = document.getElementById('grp');
   if (g) g.onclick = () => { state.group = !state.group; render(); };
@@ -611,12 +636,23 @@ function renderGate(msg) {
   stamp.textContent = 'Locked';
   app.innerHTML = `<div class="gate">
     <h2>Enter the passcode</h2>
-    <p>Ask the office for it. It is saved on this device, so you only type it once.</p>
+    <p>Ask the office for it. It is needed again each time the browser is closed.</p>
     ${msg ? `<div class="err">${esc(msg)}</div>` : ''}
-    <input id="pw" type="password" autocomplete="current-password" placeholder="Passcode">
+    <div class="pwbox">
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Passcode">
+      <button type="button" id="eye" aria-pressed="false">Show</button>
+    </div>
     <button id="go">Open dashboard</button>
   </div>`;
   const pw = document.getElementById('pw');
+  const eye = document.getElementById('eye');
+  eye.onclick = () => {
+    const shown = pw.type === 'text';
+    pw.type = shown ? 'password' : 'text';
+    eye.textContent = shown ? 'Show' : 'Hide';
+    eye.setAttribute('aria-pressed', String(!shown));
+    pw.focus();
+  };
   const go = () => { const v = pw.value.trim(); if (!v) return; PASS = v; load(); };
   document.getElementById('go').onclick = go;
   pw.onkeydown = e => { if (e.key === 'Enter') go(); };
