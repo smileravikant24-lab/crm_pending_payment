@@ -257,11 +257,12 @@ const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
    the money came in or is still owed, so the words around it decide. */
 const MONEY_SRC =
   '(₹\\s?[\\d,]+(?:\\.\\d+)?' +
-  '|\\b\\d+(?:\\.\\d+)?\\s*(?:LAKHS|LAKH|LAKS|LAK|LACS|LAC|CRORES|CRORE|CR|K)\\b' +
+  '|\\b\\d+(?:\\.\\d+)?\\s*(?:LAKHS|LAKH|LAKS|LAK|LACS|LAC|CRORES|CRORE|CR|THOUSAND|HAZAR|HAJAR|HZR|K)\\b' +
   '|\\b\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d+)?\\b' +
   '|\\b\\d{4,}(?:\\.\\d+)?\\b)';
 const UNITS = { LAKH:1e5, LAKHS:1e5, LAK:1e5, LAKS:1e5, LAC:1e5, LACS:1e5,
-                CR:1e7, CRORE:1e7, CRORES:1e7, K:1e3 };
+                CR:1e7, CRORE:1e7, CRORES:1e7,
+                THOUSAND:1e3, HAZAR:1e3, HAJAR:1e3, HZR:1e3, K:1e3 };
 
 /* money already in hand */
 const CAME_IN = /(AA\s?GAY|AA\s?GY|AAYE|AAYA|AAYI|MIL\s?GAY|MILE|KIYE|KAR\s?DIY|KARWA\s?DIY|DE\s?DIY|DIYE|CLEAR|RECEIV|CREDIT|TRANSFER|BHEJ\s?DIY|PAID)/i;
@@ -313,14 +314,21 @@ function readRemark(text) {
   return { html: html + esc(t.slice(last)), received };
 }
 
-/** Total from remarks for a row. Repeats of the same figure count once. */
+/**
+ * A figure in a remark usually restates the running total already sitting in
+ * Amount Received — "75584 ITNE PAYMENT AAYI HAI" when the sheet says 1,25,584
+ * received. Adding it on top double counts the same money. So the remark total
+ * is compared against the recorded figure and only the excess is used.
+ */
 function remarkReceived(r) {
   if (r._rr !== undefined) return r._rr;
   const seen = new Set();
   r.remarks.forEach(n => readRemark(n.text).received.forEach(v => seen.add(v)));
-  let t = 0; seen.forEach(v => t += v);
-  if (r.amount) t = Math.min(t, Math.max(r.amount - r.received, 0));   // never below zero
-  return (r._rr = Math.round(t));
+  let said = 0; seen.forEach(v => said += v);
+
+  let extra = Math.max(said - r.received, 0);                 // beyond what is recorded
+  if (r.amount) extra = Math.min(extra, Math.max(r.amount - r.received, 0));
+  return (r._rr = Math.round(extra));
 }
 
 /* Which calendar week a bill belongs to, from its invoice date. */
@@ -542,7 +550,7 @@ function entry(r) {
   const money = r.amount
     ? `<div class="mrow"><span>Invoice total</span><b>${inr(r.amount)}</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
-       ${fromRemarks ? `<div class="mrow said"><span>Said in remarks</span><b>+ ${inr(fromRemarks)}</b></div>` : ''}
+       ${fromRemarks ? `<div class="mrow said"><span>More than recorded</span><b>+ ${inr(fromRemarks)}</b></div>` : ''}
        <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(outs)}</b></div>`
     : `<div class="mrow miss"><span>Invoice total</span><b>Not filled in sheet</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
@@ -555,7 +563,7 @@ function entry(r) {
       <div class="meta">${ref}</div>
     </div>
     <div class="money">${money}
-      ${fromRemarks ? '<div class="mrow said"><span>Note</span><b>Not recorded in the sheet</b></div>' : ''}
+      ${fromRemarks ? '<div class="mrow said"><span>Note</span><b>Read from remarks, not recorded</b></div>' : ''}
     </div>
     <div class="state">
       <span class="pill ${pillCls}">${esc(ageTxt)}</span>
@@ -575,7 +583,7 @@ function footerHtml() {
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 7 · follow-up and bill-week filters; passcode is asked again after the browser closes.</p>
+    <p>Build 8 · a figure in a remark no longer double counts money already in Amount Received.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
