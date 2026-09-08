@@ -582,8 +582,9 @@ function footerHtml() {
     a full payment, so half payments stay on the list with the balance shown.</p>
     <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
+    ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 8 · a figure in a remark no longer double counts money already in Amount Received.</p>
+    <p>Build 9 · bills whose remarks say the order was cancelled are left out.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
