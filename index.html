@@ -137,6 +137,7 @@ a{color:var(--brand-deep)}
   background:#eceae2;color:var(--ink2)
 }
 .state .pill.hot{background:var(--red-tint);color:var(--red)}
+.state .pill.done{background:var(--brand-tint);color:var(--brand-deep)}
 .state .pill.warm{background:var(--amber-tint);color:var(--amber)}
 .state .step{font-size:12.5px;color:var(--ink2);margin-top:5px;line-height:1.5}
 
@@ -228,7 +229,7 @@ const actions = document.getElementById('actions');
 const STORE   = 'satija_pp_key';
 
 let DATA = null, PASS = '';
-const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true, follow:'', week:'' };
+const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true, follow:'', week:'', tw:'' };
 
 const BUCKETS = [
   {id:'notdue', label:'Not due yet',   test:d => d !== null && d < 0},
@@ -408,8 +409,9 @@ function handle(d) {
   if (!d || !d.ok) return renderError((d && d.error) || 'The web app returned an unexpected response.');
   remember(PASS);
   DATA = d;
+  DATA.open = d.rows.filter(r => !r.closed);        // settled bills only show in the weekly view
   actions.hidden = false;
-  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + d.rows.length +
+  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + DATA.open.length +
                       ' open bills of ' + d.totalRecords + ' records';
   render();
 }
@@ -417,7 +419,12 @@ function handle(d) {
 /* ---------------- filtering ---------------- */
 function visible() {
   const q = state.q.trim().toLowerCase();
-  return DATA.rows.filter(r => {
+  let base = state.tw === 'paid' ? DATA.rows.filter(r => r.paidThisWeek > 0) : DATA.open;
+  if (state.tw === 'nopay') base = base.filter(r => !r.paidThisWeek);
+  if (state.tw === 'fu')    base = base.filter(r => r.followedThisWeek);
+  if (state.tw === 'nofu')  base = base.filter(r => !r.followedThisWeek);
+
+  return base.filter(r => {
     if (state.src && r.src !== state.src) return false;
     if (state.person && r.person !== state.person) return false;
     if (state.bucket && bucketOf(r.ageDays) !== state.bucket) return false;
@@ -452,7 +459,7 @@ function render() {
 }
 
 function hero() {
-  const all = DATA.rows;
+  const all = DATA.open;
   const total = sum(all, r => outOf(r));
   const bySrc = {};
   all.forEach(r => { bySrc[r.src] = bySrc[r.src] || { label:r.srcLabel, amt:0, n:0 };
@@ -488,9 +495,9 @@ function hero() {
 }
 
 function controls(rows) {
-  const people = [...new Set(DATA.rows.map(r => r.person).filter(Boolean))].sort();
+  const people = [...new Set(DATA.open.map(r => r.person).filter(Boolean))].sort();
   const wmap = {};
-  DATA.rows.forEach(r => { const w = weekOf(r); if (w) wmap[w.id] = w; });
+  DATA.open.forEach(r => { const w = weekOf(r); if (w) wmap[w.id] = w; });
   const weeks = Object.values(wmap).sort((a, b) => b.sort - a.sort);
   const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
   return `<div class="controls">
@@ -499,6 +506,7 @@ function controls(rows) {
       ${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
     <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
     <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
+    <select id="tw">${opt('', 'This week: everything', state.tw)}${opt('paid', 'Paid this week', state.tw)}${opt('nopay', 'No payment this week', state.tw)}${opt('fu', 'Followed up this week', state.tw)}${opt('nofu', 'No follow up this week', state.tw)}</select>
     <select id="follow">${opt('', 'Followed up or not', state.follow)}${opt('yes', 'Follow up done', state.follow)}${opt('no', 'No follow up yet', state.follow)}</select>
     <select id="week">${opt('', 'Any bill week', state.week)}${weeks.map(w => opt(w.id, w.label, state.week)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
@@ -566,7 +574,7 @@ function entry(r) {
       ${fromRemarks ? '<div class="mrow said"><span>Note</span><b>Read from remarks, not recorded</b></div>' : ''}
     </div>
     <div class="state">
-      <span class="pill ${pillCls}">${esc(ageTxt)}</span>
+      <span class="pill ${r.closed ? 'done' : pillCls}">${r.closed ? 'Paid in full' + (r.paidOn ? ' on ' + esc(r.paidOn) : '') : esc(ageTxt)}</span>
       <div class="step">${esc(r.stageLabel)}${r.stagePlanned ? ' · planned ' + esc(r.stagePlanned) : ''}
         ${r.stageOverdue > 0 ? ' · call is ' + r.stageOverdue + ' days late' : ''}</div>
       ${r.paymentStatus ? `<div class="step">Payment noted as ${esc(r.paymentStatus)}</div>` : ''}
@@ -584,7 +592,7 @@ function footerHtml() {
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 9 · bills whose remarks say the order was cancelled are left out.</p>
+    <p>Build 10 · weekly view for who paid, who did not, and who was followed up.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
@@ -599,7 +607,7 @@ function wire() {
   const bind = (id, key) => { const el = document.getElementById(id);
     if (el) el.onchange = e => { state[key] = e.target.value; render(); }; };
   bind('src','src'); bind('person','person'); bind('bucket','bucket'); bind('sort','sort');
-  bind('follow','follow'); bind('week','week');
+  bind('follow','follow'); bind('week','week'); bind('tw','tw');
 
   const g = document.getElementById('grp');
   if (g) g.onclick = () => { state.group = !state.group; render(); };
