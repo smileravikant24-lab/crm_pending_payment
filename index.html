@@ -323,6 +323,7 @@ function readRemark(text) {
  */
 function remarkReceived(r) {
   if (r._rr !== undefined) return r._rr;
+  if (r.closed) return (r._rr = 0);          // Full Payment recorded — nothing left to work out
   const seen = new Set();
   r.remarks.forEach(n => readRemark(n.text).received.forEach(v => seen.add(v)));
   let said = 0; seen.forEach(v => said += v);
@@ -355,8 +356,8 @@ function weekOf(r) {
 }
 
 /** Outstanding, with or without the remark figures counted in. */
-const outOf = r => state.useRemarks && r.amount
-  ? Math.max(r.outstanding - remarkReceived(r), 0)
+const outOf = r => r.closed ? 0
+  : state.useRemarks && r.amount ? Math.max(r.outstanding - remarkReceived(r), 0)
   : r.outstanding;
 
 /* ---------------- access ---------------- */
@@ -552,7 +553,11 @@ function entry(r) {
         <span class="tx">${readRemark(n.text).html}${n.date ? `<span class="dt">${esc(n.date)}</span>` : ''}</span></div>`).join('')
     : '<div class="none">No follow-up remark has been written for this one yet.</div>';
 
-  const money = r.amount
+  const money = r.closed
+    ? `<div class="mrow"><span>Invoice total</span><b>${r.amount ? inr(r.amount) : '—'}</b></div>
+       <div class="mrow got"><span>Recorded as</span><b>Full Payment</b></div>
+       <div class="mrow bal"><span>Outstanding</span><b>${inr(0)}</b></div>`
+    : r.amount
     ? `<div class="mrow"><span>Invoice total</span><b>${inr(r.amount)}</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
        ${fromRemarks ? `<div class="mrow said"><span>More than recorded</span><b>+ ${inr(fromRemarks)}</b></div>` : ''}
@@ -589,7 +594,7 @@ function footerHtml() {
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 11 · the all-time follow-up filter is gone; the weekly one remains.</p>
+    <p>Build 12 · a bill marked Full Payment shows nothing outstanding.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
