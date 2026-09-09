@@ -229,7 +229,7 @@ const actions = document.getElementById('actions');
 const STORE   = 'satija_pp_key';
 
 let DATA = null, PASS = '';
-const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true, follow:'', week:'', tw:'' };
+const state = { q:'', src:'', person:'', bucket:'', sort:'out', group:false, useRemarks:true, week:'', tw:'' };
 
 const BUCKETS = [
   {id:'notdue', label:'Not due yet',   test:d => d !== null && d < 0},
@@ -428,8 +428,6 @@ function visible() {
     if (state.src && r.src !== state.src) return false;
     if (state.person && r.person !== state.person) return false;
     if (state.bucket && bucketOf(r.ageDays) !== state.bucket) return false;
-    if (state.follow === 'yes' && !r.remarks.length) return false;
-    if (state.follow === 'no'  &&  r.remarks.length) return false;
     if (state.week) { const w = weekOf(r); if (!w || w.id !== state.week) return false; }
     if (q) {
       const hay = [r.party, r.contact, r.phone, r.invoice, r.key, r.person, r.place,
@@ -507,7 +505,6 @@ function controls(rows) {
     <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
     <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
     <select id="tw">${opt('', 'This week: everything', state.tw)}${opt('paid', 'Paid this week', state.tw)}${opt('nopay', 'No payment this week', state.tw)}${opt('fu', 'Followed up this week', state.tw)}${opt('nofu', 'No follow up this week', state.tw)}</select>
-    <select id="follow">${opt('', 'Followed up or not', state.follow)}${opt('yes', 'Follow up done', state.follow)}${opt('no', 'No follow up yet', state.follow)}</select>
     <select id="week">${opt('', 'Any bill week', state.week)}${weeks.map(w => opt(w.id, w.label, state.week)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
     <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
@@ -592,7 +589,7 @@ function footerHtml() {
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 10 · weekly view for who paid, who did not, and who was followed up.</p>
+    <p>Build 11 · the all-time follow-up filter is gone; the weekly one remains.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
@@ -607,7 +604,7 @@ function wire() {
   const bind = (id, key) => { const el = document.getElementById(id);
     if (el) el.onchange = e => { state[key] = e.target.value; render(); }; };
   bind('src','src'); bind('person','person'); bind('bucket','bucket'); bind('sort','sort');
-  bind('follow','follow'); bind('week','week'); bind('tw','tw');
+  bind('week','week'); bind('tw','tw');
 
   const g = document.getElementById('grp');
   if (g) g.onclick = () => { state.group = !state.group; render(); };
