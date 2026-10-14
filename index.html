@@ -31,7 +31,6 @@ button,select,input{font:inherit;color:inherit}
 a{color:var(--brand-deep)}
 .wrap{max-width:var(--w);margin:0 auto;padding:0 20px}
 
-/* ---------- masthead ---------- */
 .masthead{background:var(--brand-deep);color:#eef3ef;border-bottom:3px solid var(--brand)}
 .masthead .wrap{display:flex;align-items:center;gap:16px;min-height:66px;flex-wrap:wrap}
 .logo{height:36px;width:auto;background:#fff;border-radius:3px;padding:3px 6px}
@@ -43,10 +42,8 @@ a{color:var(--brand-deep)}
   padding:7px 13px;font-size:13.5px;cursor:pointer;transition:background .12s
 }
 .btn:hover{background:#17703f}
-.btn:focus-visible{outline:2px solid #9fd6b4;outline-offset:2px}
 .btn-solid{background:var(--brand);border-color:var(--brand)}
 
-/* ---------- headline figure ---------- */
 .hero{padding:30px 0 24px;border-bottom:1px solid var(--rule)}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:end}
 .hero-label{font-size:13.5px;color:var(--ink2);margin-bottom:2px}
@@ -65,7 +62,6 @@ a{color:var(--brand-deep)}
 .splitkey b{font-weight:600}
 .splitkey span.mut{color:var(--ink2)}
 
-/* ---------- week strip ---------- */
 .week{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--rule);background:var(--card);padding:0}
 .week div{flex:1 1 150px;padding:8px 18px;border-right:1px solid var(--rule);
   display:flex;align-items:baseline;justify-content:space-between;gap:10px}
@@ -74,7 +70,6 @@ a{color:var(--brand-deep)}
 .week .v{font-family:Archivo;font-weight:600;font-size:16.5px;white-space:nowrap}
 .v.warn{color:var(--red)}
 
-/* ---------- controls ---------- */
 .controls{
   position:sticky;top:0;z-index:20;background:var(--paper);
   border-bottom:1px solid var(--rule);
@@ -90,7 +85,6 @@ a{color:var(--brand-deep)}
 .ghost:hover{border-color:var(--ink3)}
 .ghost[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-/* ---------- ledger entries ---------- */
 .ledger{display:grid;gap:10px;padding:18px 0 40px}
 .group-head{
   display:flex;justify-content:space-between;align-items:baseline;gap:14px;
@@ -153,7 +147,6 @@ a{color:var(--brand-deep)}
 .note mark.m-none{background:#fbeecb;color:#6f4405}
 .trail .none{font-size:13px;color:var(--ink3);font-style:italic}
 
-/* ---------- gate / states ---------- */
 .state-msg{padding:60px 0;text-align:center;color:var(--ink2)}
 .state-msg h2{font-size:19px;margin-bottom:8px;color:var(--ink)}
 .gate{max-width:430px;margin:70px auto;background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:28px 30px}
@@ -172,7 +165,6 @@ footer{border-top:1px solid var(--rule);padding:20px 0 34px;font-size:12.5px;col
 footer p{margin:0 0 5px;max-width:78ch}
 footer button{background:none;border:0;padding:0;color:var(--brand-deep);text-decoration:underline;cursor:pointer;font-size:12.5px}
 
-/* ---------- responsive ---------- */
 @media (max-width:900px){
   .hero-grid{grid-template-columns:1fr;gap:22px}
   .entry{grid-template-columns:1fr;gap:10px}
@@ -180,7 +172,6 @@ footer button{background:none;border:0;padding:0;color:var(--brand-deep);text-de
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ---------- print: the weekly sheet for the owner ---------- */
 @media print{
   @page{size:A4;margin:12mm}
   body{background:#fff;font-size:10.5pt}
@@ -214,14 +205,7 @@ footer button{background:none;border:0;padding:0;color:var(--brand-deep);text-de
 <main id="app"></main>
 
 <script>
-/* ================================================================
-   SETUP — fill this in once and the dashboard never asks again.
-   Paste the Apps Script Web App URL that ends with /exec.
-   ================================================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbwChxAgcq4_27Yob_kqaPARm-0XSFillNr7mIs3GhZ_fnCuXBsLxtF9eZSnyIWRrqt_/exec";
-
-/* The passcode is NOT stored in this file. It is typed once per browser
-   and kept locally, then turned into a daily token before every request. */
 
 const app     = document.getElementById('app');
 const stamp   = document.getElementById('stamp');
@@ -240,7 +224,6 @@ const BUCKETS = [
   {id:'d60p',   label:'Over 60 days',  test:d => d !== null && d > 60}
 ];
 
-/* ---------------- formatting ---------------- */
 const inr     = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
 const compact = n => {
   n = n || 0;
@@ -253,9 +236,6 @@ const esc = s => String(s == null ? '' : s)
 const bucketOf = d => (BUCKETS.find(b => b.test(d)) || {}).id || 'unknown';
 const sum = (arr, f) => arr.reduce((t, x) => t + (f(x) || 0), 0);
 
-/* Pooja often writes the figure inside the remark — "7 LAK AAYE HAI",
-   "223020 RED", "60160 ITNI BAKI HAI". The number alone does not say whether
-   the money came in or is still owed, so the words around it decide. */
 const MONEY_SRC =
   '(₹\\s?[\\d,]+(?:\\.\\d+)?' +
   '|\\b\\d+(?:\\.\\d+)?\\s*(?:LAKHS|LAKH|LAKS|LAK|LACS|LAC|CRORES|CRORE|CR|THOUSAND|HAZAR|HAJAR|HZR|K)\\b' +
@@ -265,13 +245,9 @@ const UNITS = { LAKH:1e5, LAKHS:1e5, LAK:1e5, LAKS:1e5, LAC:1e5, LACS:1e5,
                 CR:1e7, CRORE:1e7, CRORES:1e7,
                 THOUSAND:1e3, HAZAR:1e3, HAJAR:1e3, HZR:1e3, K:1e3 };
 
-/* money already in hand */
 const CAME_IN = /(AA\s?GAY|AA\s?GY|AAYE|AAYA|AAYI|MIL\s?GAY|MILE|KIYE|KAR\s?DIY|KARWA\s?DIY|DE\s?DIY|DIYE|CLEAR|RECEIV|CREDIT|TRANSFER|BHEJ\s?DIY|PAID)/i;
-/* money still owed */
 const STILL_DUE = /(BAKI|BACHA|\bRED\b|PENDING|MAGN|MANGN|LENI|LENA|DENA|CHAHIYE|\bDUE\b|KARWANA|KARNA|REH\s?GAY)/i;
-/* a promise, not a receipt — "AAYE GE", "KAR DENGE", "HO JAYEGA" */
 const PROMISED = /(AAYE\s?GE|AAYEN\s?GE|AAEN?GE|AA\s?JAY|AA\s?JAEG|KAR\s?DEN?GE|KARWA\s?DEN?GE|DE\s?DEN?GE|BHEJ\s?DEN?GE|HO\s?JAY|KARWATE|KARTE\s?HAI|DEN?GE)/i;
-/* dates written inside remarks — "30-08 2026", "21/08/2026" — are never amounts */
 const DATE_SRC = '\\b\\d{1,2}\\s?[-/.]\\s?\\d{1,2}(?:\\s?[-/.]\\s?\\d{2,4})?\\b|\\b(?:19[5-9]\\d|20[0-4]\\d)\\b';
 
 function toValue(raw) {
@@ -281,10 +257,8 @@ function toValue(raw) {
   return isNaN(n) ? 0 : n * (UNITS[(m[2] || '').toUpperCase()] || 1);
 }
 
-/** Marks up one remark and returns any figures that read as money received. */
 function readRemark(text) {
   const t = String(text || '');
-
   const dates = [];
   const dre = new RegExp(DATE_SRC, 'gi');
   let d;
@@ -295,7 +269,7 @@ function readRemark(text) {
   let html = '', last = 0, m;
   const received = [];
   while ((m = re.exec(t)) !== null) {
-    if (isDate(m.index, re.lastIndex)) continue;          // it is a date, leave it alone
+    if (isDate(m.index, re.lastIndex)) continue;
 
     const after  = t.slice(re.lastIndex, re.lastIndex + 45);
     const before = t.slice(Math.max(0, m.index - 25), m.index);
@@ -310,23 +284,18 @@ function readRemark(text) {
     html += esc(t.slice(last, m.index)) + `<mark class="m-${kind}">${esc(m[1])}</mark>`;
     last = re.lastIndex;
     const v = toValue(m[1]);
-    if (kind === 'in' && v) received.push(v);
+    
+    // EXPLICIT CHECK: If remark text indicates amount left/baki/due, do NOT count it as received FMS
+    const fullSnippet = before + m[1] + after;
+    const isExplicitlyLeft = STILL_DUE.test(fullSnippet) && !CAME_IN.test(fullSnippet);
+
+    if (kind === 'in' && v && !isExplicitlyLeft) {
+      received.push(v);
+    }
   }
   return { html: html + esc(t.slice(last)), received };
 }
 
-/**
- * A figure in a remark usually restates the running total already sitting in
- * Amount Received — "75584 ITNE PAYMENT AAYI HAI" when the sheet says 1,25,584
- * received. Adding it on top double counts the same money. So the remark total
- * is compared against the recorded figure and only the excess is used.
- */
-/**
- * A figure in a remark is sometimes the very receipt already typed into an
- * Amount Received cell — "75584 ITNE PAYMENT AAYI HAI" next to a recorded
- * 75584. Adding that again counts one payment twice. A figure that matches no
- * recorded receipt is a separate payment nobody has entered yet, so it counts.
- */
 function remarkStated(r) {
   if (r._rs !== undefined) return r._rs;
   if (r.closed) return (r._rs = 0);
@@ -334,7 +303,7 @@ function remarkStated(r) {
   const seen = new Set();
   r.remarks.forEach(n => readRemark(n.text).received.forEach(v => {
     const x = Math.round(v);
-    if (!recorded.has(x)) seen.add(x);          // already in the sheet, skip it
+    if (!recorded.has(x)) seen.add(x);
   }));
   let said = 0; seen.forEach(v => said += v);
   return (r._rs = said);
@@ -342,13 +311,12 @@ function remarkStated(r) {
 
 function remarkReceived(r) {
   if (r._rr !== undefined) return r._rr;
-  if (r.closed) return (r._rr = 0);          // Full Payment recorded — nothing left to work out
+  if (r.closed) return (r._rr = 0);
   let extra = remarkStated(r);
-  if (r.amount) extra = Math.min(extra, Math.max(r.amount - r.received, 0));   // never below zero
+  if (r.amount) extra = Math.min(extra, Math.max(r.amount - r.received, 0));
   return (r._rr = Math.round(extra));
 }
 
-/* Which calendar week a bill belongs to, from its invoice date. */
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function weekOf(r) {
   if (r._wk !== undefined) return r._wk;
@@ -357,7 +325,7 @@ function weekOf(r) {
   const d = new Date(+p[2], +p[1] - 1, +p[0]);
   if (isNaN(d.getTime())) return (r._wk = null);
 
-  const start = new Date(d); start.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // Monday
+  const start = new Date(d); start.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   const end   = new Date(start); end.setDate(start.getDate() + 6);
   const thu   = new Date(start); thu.setDate(start.getDate() + 3);
   const jan4  = new Date(thu.getFullYear(), 0, 4);
@@ -370,21 +338,17 @@ function weekOf(r) {
                     sort: start.getTime() });
 }
 
-/** Outstanding, with or without the remark figures counted in. */
 const outOf = r => r.closed ? 0
-  : state.useRemarks && r.amount ? Math.max(r.outstanding - remarkReceived(r), 0)
+  : state.useRemarks && r.amount ? Math.max(r.amount - (r.received + remarkReceived(r)), 0)
   : r.outstanding;
 
-/* ---------------- access ---------------- */
 async function dailyToken(pass) {
-  const day = new Date().toISOString().slice(0, 10);          // UTC date
+  const day = new Date().toISOString().slice(0, 10);
   const buf = new TextEncoder().encode(pass + '|' + day);
   const dig = await crypto.subtle.digest('SHA-256', buf);
   return [...new Uint8Array(dig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/* sessionStorage, not localStorage: closing the browser clears it, so the
-   passcode is asked for again on the next visit. */
 function remember(pass) { try { sessionStorage.setItem(STORE, pass); } catch (e) {} }
 function recall()       { try { return sessionStorage.getItem(STORE) || ''; } catch (e) { return ''; } }
 function forget()       { try { sessionStorage.removeItem(STORE); localStorage.removeItem(STORE); } catch (e) {} }
@@ -392,20 +356,18 @@ function forget()       { try { sessionStorage.removeItem(STORE); localStorage.r
 function start() {
   if (!API_URL) return renderNoUrl();
   if (!window.crypto || !crypto.subtle)
-    return renderGate('This page needs to run over https. Open the GitHub Pages link, not the file on disk.');
+    return renderGate('This page needs to run over https.');
   PASS = recall();
   if (!PASS) return renderGate('');
   load();
 }
 
-/* ---------------- data loading ---------------- */
 async function load() {
   stamp.textContent = 'Loading…';
-  app.innerHTML = '<div class="state-msg wrap"><h2>Loading collections data…</h2>' +
-                  '<p>Reading the FMS, Split and Manually tabs.</p></div>';
+  app.innerHTML = '<div class="state-msg wrap"><h2>Loading collections data…</h2></div>';
   let token;
   try { token = await dailyToken(PASS); }
-  catch (e) { return renderGate('Could not build the access token in this browser.'); }
+  catch (e) { return renderGate('Could not build access token.'); }
 
   const url = API_URL + (API_URL.includes('?') ? '&' : '?') + 'token=' + token + '&v=' + Date.now();
   fetch(url).then(r => r.json()).then(handle).catch(() => jsonp(url));
@@ -416,23 +378,21 @@ function jsonp(url) {
   window[cb] = d => { delete window[cb]; s.remove(); handle(d); };
   const s = document.createElement('script');
   s.src = url + '&callback=' + cb;
-  s.onerror = () => renderError('Could not reach the Apps Script web app. Check that the deployment access is set to "Anyone".');
+  s.onerror = () => renderError('Could not reach Apps Script.');
   document.body.appendChild(s);
 }
 
 function handle(d) {
   if (d && d.code === 'AUTH') { forget(); PASS = ''; return renderGate('That passcode did not work.'); }
-  if (!d || !d.ok) return renderError((d && d.error) || 'The web app returned an unexpected response.');
+  if (!d || !d.ok) return renderError((d && d.error) || 'Unexpected response.');
   remember(PASS);
   DATA = d;
-  DATA.open = d.rows.filter(r => !r.closed);        // settled bills only show in the weekly view
+  DATA.open = d.rows.filter(r => !r.closed);
   actions.hidden = false;
-  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + DATA.open.length +
-                      ' open bills of ' + d.totalRecords + ' records';
+  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + DATA.open.length + ' open bills';
   render();
 }
 
-/* ---------------- filtering ---------------- */
 function visible() {
   const q = state.q.trim().toLowerCase();
   let base = state.tw === 'paid' ? DATA.rows.filter(r => r.paidThisWeek > 0) : DATA.open;
@@ -461,7 +421,6 @@ function cmp(a, b) {
   return outOf(b) - outOf(a);
 }
 
-/* ---------------- render ---------------- */
 function render() {
   const rows = visible();
   app.innerHTML =
@@ -497,8 +456,7 @@ function hero() {
       <div class="hero-figure">${compact(total)}</div>
       <p class="hero-note">
         <b>${all.length}</b> open bills across <b>${parties}</b> parties.
-        <b>${compact(sum(over30, r => outOf(r)))}</b> of it is more than 30 days past due.
-        ${noAmt.length ? `<b>${noAmt.length}</b> item${noAmt.length > 1 ? 's have' : ' has'} no invoice value filled in the sheet, so the real figure is higher.` : ''}
+        ${noAmt.length ? `<b>${noAmt.length}</b> item${noAmt.length > 1 ? 's have' : ' has'} no invoice value filled in the sheet.` : ''}
       </p>
     </div>
     <div>
@@ -516,23 +474,21 @@ function controls(rows) {
   const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
   return `<div class="controls">
     <input type="search" id="q" placeholder="Search party, invoice, phone or remark text" value="${esc(state.q)}">
-    <select id="src">${opt('', 'All three trackers', state.src)}
-      ${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
+    <select id="src">${opt('', 'All three trackers', state.src)}${opt('FMS', 'Order to Delivery', state.src)}${opt('Split', 'Direct Dispatch', state.src)}${opt('Manually', 'Manual Entry', state.src)}</select>
     <select id="person">${opt('', 'Every sales person', state.person)}${people.map(p => opt(p, p, state.person)).join('')}</select>
     <select id="bucket">${opt('', 'Any age', state.bucket)}${BUCKETS.map(b => opt(b.id, b.label, state.bucket)).join('')}</select>
     <select id="tw">${opt('', 'This week: everything', state.tw)}${opt('paid', 'Paid this week', state.tw)}${opt('nopay', 'No payment this week', state.tw)}${opt('fu', 'Followed up this week', state.tw)}${opt('nofu', 'No follow up this week', state.tw)}</select>
     <select id="week">${opt('', 'Any bill week', state.week)}${weeks.map(w => opt(w.id, w.label, state.week)).join('')}</select>
     <select id="sort">${opt('out', 'Biggest amount first', state.sort)}${opt('age', 'Oldest first', state.sort)}${opt('party', 'Party A to Z', state.sort)}</select>
     <button class="ghost" id="grp" aria-pressed="${state.group}">Group by party</button>
-    <button class="ghost" id="rem" aria-pressed="${state.useRemarks}" title="Counts figures like '7 LAK AAYE HAI' as money received">Count remark amounts</button>
+    <button class="ghost" id="rem" aria-pressed="${state.useRemarks}">Count remark amounts</button>
     <span class="spacer"></span>
     <span class="count">${rows.length} shown · ${compact(sum(rows, r => outOf(r)))}</span>
   </div>`;
 }
 
 function ledger(rows) {
-  if (!rows.length) return `<div class="state-msg"><h2>Nothing matches these filters</h2>
-    <p>Clear the search box or set the age filter back to "Any age".</p></div>`;
+  if (!rows.length) return `<div class="state-msg"><h2>Nothing matches these filters</h2></div>`;
   if (!state.group) return rows.map(entry).join('');
 
   const groups = {};
@@ -548,14 +504,14 @@ function entry(r) {
   const outs = outOf(r);
   const said  = state.useRemarks ? remarkStated(r) : 0;
   const extra = state.useRemarks ? remarkReceived(r) : 0;
+  const totalReceived = (r.received || 0) + extra;
   const late = r.ageDays !== null && r.ageDays > 30;
   const ageTxt = r.ageDays === null ? 'No due date in sheet'
     : r.ageDays < 0 ? Math.abs(r.ageDays) + ' days left to pay'
     : r.ageDays + ' days past due';
   const pillCls = r.ageDays === null ? '' : r.ageDays > 30 ? 'hot' : r.ageDays > 0 ? 'warm' : '';
 
-  const meta = [r.contact, r.phone ? `<i>${esc(r.phone)}</i>` : '', r.place, r.person]
-    .filter(Boolean).join(' · ');
+  const meta = [r.contact, r.phone ? `<i>${esc(r.phone)}</i>` : '', r.place, r.person].filter(Boolean).join(' · ');
   const ref = [
     r.invoice ? 'Invoice ' + esc(r.invoice) : esc(r.key),
     r.invoiceDate ? 'dated ' + esc(r.invoiceDate) : '',
@@ -567,7 +523,7 @@ function entry(r) {
   const notes = r.remarks.length
     ? r.remarks.map(n => `<div class="note"><span class="st">${esc(n.stage)}</span>
         <span class="tx">${readRemark(n.text).html}${n.date ? `<span class="dt">${esc(n.date)}</span>` : ''}</span></div>`).join('')
-    : '<div class="none">No follow-up remark has been written for this one yet.</div>';
+    : '<div class="none">No follow-up remark has been written yet.</div>';
 
   const money = r.closed
     ? `<div class="mrow"><span>Invoice total</span><b>${r.amount ? inr(r.amount) : '—'}</b></div>
@@ -575,11 +531,11 @@ function entry(r) {
        <div class="mrow bal"><span>Outstanding</span><b>${inr(0)}</b></div>`
     : r.amount
     ? `<div class="mrow"><span>Invoice total</span><b>${inr(r.amount)}</b></div>
-       <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
-       ${said ? `<div class="mrow said"><span>Said in remarks</span><b>${inr(said)}</b></div>` : ''}
+       <div class="mrow ${totalReceived ? 'got' : ''}"><span>Received</span><b>${totalReceived ? inr(totalReceived) : '—'}</b></div>
+       ${said ? `<div class="mrow said"><span>From remarks</span><b>+${inr(said)}</b></div>` : ''}
        <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(outs)}</b></div>`
     : `<div class="mrow miss"><span>Invoice total</span><b>Not filled in sheet</b></div>
-       <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
+       <div class="mrow ${totalReceived ? 'got' : ''}"><span>Received</span><b>${totalReceived ? inr(totalReceived) : '—'}</b></div>
        <div class="mrow bal"><span>Outstanding</span><b>Unknown</b></div>`;
 
   return `<article class="entry src-${r.src} ${late ? 'late' : ''}">
@@ -588,13 +544,10 @@ function entry(r) {
       <div class="meta">${meta}</div>
       <div class="meta">${ref}</div>
     </div>
-    <div class="money">${money}
-      ${extra ? '<div class="mrow said"><span>Note</span><b>Read from remarks, not recorded</b></div>' : ''}
-    </div>
+    <div class="money">${money}</div>
     <div class="state">
       <span class="pill ${r.closed ? 'done' : pillCls}">${r.closed ? 'Paid in full' + (r.paidOn ? ' on ' + esc(r.paidOn) : '') : esc(ageTxt)}</span>
-      <div class="step">${esc(r.stageLabel)}${r.stagePlanned ? ' · planned ' + esc(r.stagePlanned) : ''}
-        ${r.stageOverdue > 0 ? ' · call is ' + r.stageOverdue + ' days late' : ''}</div>
+      <div class="step">${esc(r.stageLabel)}${r.stagePlanned ? ' · planned ' + esc(r.stagePlanned) : ''}</div>
       ${r.paymentStatus ? `<div class="step">Payment noted as ${esc(r.paymentStatus)}</div>` : ''}
     </div>
     <div class="trail">${notes}</div>
@@ -602,20 +555,12 @@ function entry(r) {
 }
 
 function footerHtml() {
-  const skipped = Object.keys(DATA.skipped || {});
   return `<footer><div class="wrap">
-    <p>Built from the FMS, Split and Manually tabs. An item counts as pending until a stage records
-    a full payment, so half payments stay on the list with the balance shown.</p>
-    <p>The FMS and Split tabs repeat the same invoice on several rows. Each invoice or PO number is
-    counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
-    ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
-    ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 14 · a remark figure counts only when it is not already in an Amount Received cell.</p>
+    <p>Build 16 · Full payment status properly locks entries and remark left amounts are excluded.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
 
-/* ---------------- interaction ---------------- */
 function wire() {
   const q = document.getElementById('q');
   if (q) q.oninput = e => {
@@ -648,34 +593,25 @@ document.getElementById('btnSignout').onclick = signOut;
 document.getElementById('btnPrint').onclick = () => window.print();
 document.getElementById('btnCsv').onclick = () => {
   if (!DATA) return;
-  const head = ['Source','Party','Contact','Phone','Sales person','Invoice / key','Invoice date',
-                'Due date','Invoice amount','Received (sheet)','Said in remarks','Outstanding','Days past due',
-                'Current step','Payment status','All remarks'];
+  const head = ['Source','Party','Invoice','Invoice Amount','Received','Outstanding'];
   const cell = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
-  const body = visible().map(r => [r.srcLabel, r.party, r.contact, r.phone, r.person,
-    r.invoice || r.key, r.invoiceDate, r.dueDate, r.amount, r.received,
-    state.useRemarks ? remarkStated(r) : 0, outOf(r),
-    r.ageDays, r.stageLabel, r.paymentStatus,
-    r.remarks.map(n => n.stage + ': ' + n.text).join(' | ')].map(cell).join(','));
-  const blob = new Blob(['\uFEFF' + [head.map(cell).join(','), ...body].join('\n')],
-                        { type:'text/csv;charset=utf-8' });
+  const body = visible().map(r => [r.srcLabel, r.party, r.invoice || r.key, r.amount, r.received, outOf(r)].map(cell).join(','));
+  const blob = new Blob(['\uFEFF' + [head.map(cell).join(','), ...body].join('\n')], { type:'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'satija-pending-payments-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = 'satija-pending-payments.csv';
   a.click();
 };
 
-/* ---------------- gate screens ---------------- */
 function renderGate(msg) {
   actions.hidden = true;
   stamp.textContent = 'Locked';
   app.innerHTML = `<div class="gate">
     <h2>Enter the passcode</h2>
-    <p>Ask the office for it. It is needed again each time the browser is closed.</p>
     ${msg ? `<div class="err">${esc(msg)}</div>` : ''}
     <div class="pwbox">
-      <input id="pw" type="password" autocomplete="current-password" placeholder="Passcode">
-      <button type="button" id="eye" aria-pressed="false">Show</button>
+      <input id="pw" type="password" placeholder="Passcode">
+      <button type="button" id="eye">Show</button>
     </div>
     <button id="go">Open dashboard</button>
   </div>`;
@@ -685,8 +621,6 @@ function renderGate(msg) {
     const shown = pw.type === 'text';
     pw.type = shown ? 'password' : 'text';
     eye.textContent = shown ? 'Show' : 'Hide';
-    eye.setAttribute('aria-pressed', String(!shown));
-    pw.focus();
   };
   const go = () => { const v = pw.value.trim(); if (!v) return; PASS = v; load(); };
   document.getElementById('go').onclick = go;
@@ -695,19 +629,12 @@ function renderGate(msg) {
 }
 
 function renderNoUrl() {
-  app.innerHTML = `<div class="gate">
-    <h2>This copy is not set up yet</h2>
-    <p>Open <code>index.html</code>, find <code>const API_URL = ""</code> near the top of the script,
-       and paste the Apps Script web app URL that ends in <code>/exec</code>. Commit it and the
-       dashboard will connect on its own from then on.</p>
-  </div>`;
+  app.innerHTML = `<div class="gate"><h2>API URL missing</h2></div>`;
 }
 
 function renderError(msg) {
-  stamp.textContent = 'Could not load';
-  app.innerHTML = `<div class="wrap"><div class="err">${esc(msg)}</div>
-    <p style="font-size:14px;color:var(--ink2)">Open the web app URL directly in a browser tab. If it asks you
-    to sign in, redeploy it with <b>Execute as: Me</b> and <b>Who has access: Anyone</b>.</p></div>`;
+  stamp.textContent = 'Error';
+  app.innerHTML = `<div class="wrap"><div class="err">${esc(msg)}</div></div>`;
 }
 
 start();
