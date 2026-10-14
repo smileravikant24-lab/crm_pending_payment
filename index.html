@@ -316,12 +316,6 @@ function readRemark(text) {
 }
 
 /**
- * A figure in a remark usually restates the running total already sitting in
- * Amount Received — "75584 ITNE PAYMENT AAYI HAI" when the sheet says 1,25,584
- * received. Adding it on top double counts the same money. So the remark total
- * is compared against the recorded figure and only the excess is used.
- */
-/**
  * A figure in a remark is sometimes the very receipt already typed into an
  * Amount Received cell — "75584 ITNE PAYMENT AAYI HAI" next to a recorded
  * 75584. Adding that again counts one payment twice. A figure that matches no
@@ -372,7 +366,7 @@ function weekOf(r) {
 
 /** Outstanding, with or without the remark figures counted in. */
 const outOf = r => r.closed ? 0
-  : state.useRemarks && r.amount ? Math.max(r.outstanding - remarkReceived(r), 0)
+  : state.useRemarks && r.amount ? Math.max(r.amount - (r.received + remarkReceived(r)), 0)
   : r.outstanding;
 
 /* ---------------- access ---------------- */
@@ -548,6 +542,7 @@ function entry(r) {
   const outs = outOf(r);
   const said  = state.useRemarks ? remarkStated(r) : 0;
   const extra = state.useRemarks ? remarkReceived(r) : 0;
+  const totalReceived = (r.received || 0) + extra;
   const late = r.ageDays !== null && r.ageDays > 30;
   const ageTxt = r.ageDays === null ? 'No due date in sheet'
     : r.ageDays < 0 ? Math.abs(r.ageDays) + ' days left to pay'
@@ -575,11 +570,11 @@ function entry(r) {
        <div class="mrow bal"><span>Outstanding</span><b>${inr(0)}</b></div>`
     : r.amount
     ? `<div class="mrow"><span>Invoice total</span><b>${inr(r.amount)}</b></div>
-       <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
-       ${said ? `<div class="mrow said"><span>Said in remarks</span><b>${inr(said)}</b></div>` : ''}
+       <div class="mrow ${totalReceived ? 'got' : ''}"><span>Received</span><b>${totalReceived ? inr(totalReceived) : '—'}</b></div>
+       ${said ? `<div class="mrow said"><span>From remarks</span><b>+${inr(said)}</b></div>` : ''}
        <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(outs)}</b></div>`
     : `<div class="mrow miss"><span>Invoice total</span><b>Not filled in sheet</b></div>
-       <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
+       <div class="mrow ${totalReceived ? 'got' : ''}"><span>Received</span><b>${totalReceived ? inr(totalReceived) : '—'}</b></div>
        <div class="mrow bal"><span>Outstanding</span><b>Unknown</b></div>`;
 
   return `<article class="entry src-${r.src} ${late ? 'late' : ''}">
@@ -588,9 +583,7 @@ function entry(r) {
       <div class="meta">${meta}</div>
       <div class="meta">${ref}</div>
     </div>
-    <div class="money">${money}
-      ${extra ? '<div class="mrow said"><span>Note</span><b>Read from remarks, not recorded</b></div>' : ''}
-    </div>
+    <div class="money">${money}</div>
     <div class="state">
       <span class="pill ${r.closed ? 'done' : pillCls}">${r.closed ? 'Paid in full' + (r.paidOn ? ' on ' + esc(r.paidOn) : '') : esc(ageTxt)}</span>
       <div class="step">${esc(r.stageLabel)}${r.stagePlanned ? ' · planned ' + esc(r.stagePlanned) : ''}
@@ -610,7 +603,7 @@ function footerHtml() {
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 14 · a remark figure counts only when it is not already in an Amount Received cell.</p>
+    <p>Build 15 · remark receipt amounts count into total received and reduce outstanding balances dynamically.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
