@@ -293,7 +293,8 @@ function readRemark(text) {
 
   const re = new RegExp(MONEY_SRC, 'gi');
   let html = '', last = 0, m;
-  const received = [];
+  const received = [], balances = [];
+  let figs = 0;
   while ((m = re.exec(t)) !== null) {
     if (isDate(m.index, re.lastIndex)) continue;          // it is a date, leave it alone
 
@@ -310,9 +311,43 @@ function readRemark(text) {
     html += esc(t.slice(last, m.index)) + `<mark class="m-${kind}">${esc(m[1])}</mark>`;
     last = re.lastIndex;
     const v = toValue(m[1]);
+    figs++;
     if (kind === 'in' && v) received.push(v);
+    if (kind === 'due' && v) {                     // "ITNA BAKI HAI" — the figure is what is left to collect
+      const w = hits.length && hits[0][0] === 'due' ? hits[0][1][0] : (STILL_DUE.exec(before) || [''])[0];
+      if (BALANCE.test(w)) balances.push(v);
+    }
   }
-  return { html: html + esc(t.slice(last)), received };
+  return { html: html + esc(t.slice(last)), received, balances, figs };
+}
+
+/* "PAYMENT AA GYI H" with no figure and no "baki" — the whole bill has been paid. */
+const BALANCE  = /(BAKI|BAAKI|BACHA|BCHA|\bRED\b|PENDING|REH\s?GAY)/i;
+const PAY_WORD = /(PAYMENT|PAYMNT|PMT|PAIMENT)/i;
+const PAY_DONE = /(AA\s?G[AY]\w*|AAY[AIE]\b|MIL\s?G[AY]\w*|MILE\b|RECEIVED?|CLEARED?|CREDITED|HO\s?G[AY]\w*)/i;
+const NEGATED  = /(\bNHI\b|\bNAHI\b|\bNAHIN\b|\bNHIN\b|\bNOT\b|\bNO\b|\bNA\b)/i;
+
+/** The latest remark that settles the matter: 'paid', 'open', or '' when no remark says either way. */
+function remarkVerdict(r) {
+  if (r._rv !== undefined) return r._rv;
+  let v = '';
+  r.remarks.forEach(n => {
+    const t = String(n.text || '');
+    if (!t) return;
+    const info = readRemark(t);
+    if (PAY_WORD.test(t) && PAY_DONE.test(t) && !info.figs && !STILL_DUE.test(t) && !PROMISED.test(t) && !NEGATED.test(t)) v = 'paid';
+    else if (STILL_DUE.test(t) || PROMISED.test(t) || NEGATED.test(t)) v = 'open';
+  });
+  return (r._rv = v);
+}
+const paidByRemark = r => !r.closed && remarkVerdict(r) === 'paid';
+
+/** The "baki" figure from the latest remark that states one, or null. */
+function remarkBalance(r) {
+  if (r._rb !== undefined) return r._rb;
+  let bal = null;
+  if (!r.closed) r.remarks.forEach(n => { const b = readRemark(n.text).balances; if (b.length) bal = b[b.length - 1]; });
+  return (r._rb = bal);
 }
 
 /**
@@ -371,9 +406,18 @@ function weekOf(r) {
 }
 
 /** Outstanding, with or without the remark figures counted in. */
-const outOf = r => r.closed ? 0
-  : state.useRemarks && r.amount ? Math.max(r.outstanding - remarkReceived(r), 0)
-  : r.outstanding;
+function outOf(r) {
+  if (r.closed) return 0;
+  if (!state.useRemarks) return r.outstanding;
+  if (paidByRemark(r)) return 0;
+  const calc = r.amount ? Math.max(r.outstanding - remarkReceived(r), 0) : null;
+  const bal  = remarkBalance(r);                       // "ITNA BAKI HAI" written in a remark
+  if (bal !== null) return calc !== null ? Math.min(bal, calc) : bal;
+  return calc !== null ? calc : r.outstanding;
+}
+
+/** Bills still owing: not closed in the sheet and not declared paid in a remark. */
+const openRows = () => DATA.rows.filter(r => !r.closed && !(state.useRemarks && paidByRemark(r)));
 
 /* ---------------- access ---------------- */
 async function dailyToken(pass) {
@@ -425,9 +469,8 @@ function handle(d) {
   if (!d || !d.ok) return renderError((d && d.error) || 'The web app returned an unexpected response.');
   remember(PASS);
   DATA = d;
-  DATA.open = d.rows.filter(r => !r.closed);        // settled bills only show in the weekly view
-  actions.hidden = false;
-  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + DATA.open.length +
+  actions.hidden = false;                           // settled bills only show in the weekly view
+  stamp.textContent = 'Updated ' + d.generatedAt + ' · ' + openRows().length +
                       ' open bills of ' + d.totalRecords + ' records';
   render();
 }
@@ -435,7 +478,7 @@ function handle(d) {
 /* ---------------- filtering ---------------- */
 function visible() {
   const q = state.q.trim().toLowerCase();
-  let base = state.tw === 'paid' ? DATA.rows.filter(r => r.paidThisWeek > 0) : DATA.open;
+  let base = state.tw === 'paid' ? DATA.rows.filter(r => r.paidThisWeek > 0) : openRows();
   if (state.tw === 'nopay') base = base.filter(r => !r.paidThisWeek);
   if (state.tw === 'fu')    base = base.filter(r => r.followedThisWeek);
   if (state.tw === 'nofu')  base = base.filter(r => !r.followedThisWeek);
@@ -473,7 +516,7 @@ function render() {
 }
 
 function hero() {
-  const all = DATA.open;
+  const all = openRows();
   const total = sum(all, r => outOf(r));
   const bySrc = {};
   all.forEach(r => { bySrc[r.src] = bySrc[r.src] || { label:r.srcLabel, amt:0, n:0 };
@@ -509,9 +552,9 @@ function hero() {
 }
 
 function controls(rows) {
-  const people = [...new Set(DATA.open.map(r => r.person).filter(Boolean))].sort();
+  const people = [...new Set(openRows().map(r => r.person).filter(Boolean))].sort();
   const wmap = {};
-  DATA.open.forEach(r => { const w = weekOf(r); if (w) wmap[w.id] = w; });
+  openRows().forEach(r => { const w = weekOf(r); if (w) wmap[w.id] = w; });
   const weeks = Object.values(wmap).sort((a, b) => b.sort - a.sort);
   const opt = (v, l, cur) => `<option value="${esc(v)}"${cur === v ? ' selected' : ''}>${esc(l)}</option>`;
   return `<div class="controls">
@@ -580,7 +623,7 @@ function entry(r) {
        <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${inr(outs)}</b></div>`
     : `<div class="mrow miss"><span>Invoice total</span><b>Not filled in sheet</b></div>
        <div class="mrow ${r.received ? 'got' : ''}"><span>Received</span><b>${r.received ? inr(r.received) : '—'}</b></div>
-       <div class="mrow bal"><span>Outstanding</span><b>Unknown</b></div>`;
+       <div class="mrow bal"><span>Outstanding</span><b class="${late ? 'late' : ''}">${state.useRemarks && remarkBalance(r) !== null ? inr(outs) : 'Unknown'}</b></div>`;
 
   return `<article class="entry src-${r.src} ${late ? 'late' : ''}">
     <div class="who">
@@ -610,7 +653,8 @@ function footerHtml() {
     counted once here, which is why the totals are lower than a plain sum of the sheet.</p>
     ${DATA.cancelled ? `<p>${DATA.cancelled} bill${DATA.cancelled > 1 ? 's are' : ' is'} left out because a remark says the order was cancelled.</p>` : ''}
     ${skipped.length ? `<p>Could not read: ${esc(skipped.join(', '))}.</p>` : ''}
-    <p>Build 14 · a remark figure counts only when it is not already in an Amount Received cell.</p>
+    <p>Build 15 · a remark figure counts only when it is not already in an Amount Received cell.
+    A remark such as "PAYMENT AA GYI HAI" with no "baki" or promise marks the bill paid, and "ITNA BAKI HAI" sets the balance.</p>
     <p><button id="signout">Sign out now</button></p>
   </div></footer>`;
 }
